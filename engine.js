@@ -285,22 +285,23 @@ function renderDraftScreen() {
 
     const poolContainer = document.getElementById('draft-card-pool');
     poolContainer.innerHTML = '';
-let requiredReserve = 0;
-let otherPicksThisRound = 2 - draftState.roundPicks.length;
-let currentPos = draftState.schedule[draftState.round - 1];
 
-// 1. Calculate the reserve for the remaining pick in the CURRENT round
-if (otherPicksThisRound > 0) {
-    requiredReserve += (currentPos === "G" ? 75000 : 50000) * otherPicksThisRound;
-}
+    let requiredReserve = 0;
+    let otherPicksThisRound = 2 - draftState.roundPicks.length;
+    let currentPos = draftState.schedule[draftState.round - 1];
 
-// 2. Calculate the reserve for all FUTURE rounds
-for (let r = draftState.round; r < 12; r++) {
-    let pos = draftState.schedule[r];
-    requiredReserve += (pos === "G" ? 75000 : 50000) * 2;
-}
+    // 1. Calculate the reserve for the remaining pick in the CURRENT round
+    if (otherPicksThisRound > 0) {
+        requiredReserve += (currentPos === "G" ? 75000 : 50000) * otherPicksThisRound;
+    }
 
-let maxAffordableSalary = draftState.budget - requiredReserve;
+    // 2. Calculate the reserve for all FUTURE rounds
+    for (let r = draftState.round; r < 12; r++) {
+        let pos = draftState.schedule[r];
+        requiredReserve += (pos === "G" ? 75000 : 50000) * 2;
+    }
+
+    let maxAffordableSalary = draftState.budget - requiredReserve;
 
     draftState.currentPool.forEach(player => {
         let isSelected = draftState.roundPicks.some(p => p.name === player.name && p.season === player.season);
@@ -345,6 +346,7 @@ function confirmDraftRound() {
         generateDraftPool();
     }
 }
+
 function finishInitialDraft() {
     // Replaced structuredClone with bulletproof JSON deep copy
     runState.runtimeDeck = JSON.parse(JSON.stringify(runState.franchisePool));
@@ -755,31 +757,6 @@ function openStorefrontPhase() {
         };
         playerZone.appendChild(card);
     });
-
-    const perksZone = document.getElementById('perks-pool-zone');
-    perksZone.innerHTML = '';
-
-    let validPerks = MASTER_PERKS_POOL.filter(p => {
-        let activeInSlot = runState.activePerks[p.category];
-        return !activeInSlot || activeInSlot.id !== p.id;
-    });
-
-    let randomPerksSelection = validPerks.length > 0 ? shuffleArray([...validPerks]).slice(0, 3) : [];
-
-    randomPerksSelection.forEach((perk) => {
-        const pCard = document.createElement('div');
-        pCard.className = "hockey-card perk-card";
-        pCard.innerHTML = `
-            <span class="pos-tag" style="background:#7c3aed;">${perk.category.toUpperCase().replace("_", " ")}</span>
-            <span class="price-tag">$${(perk.cost/1000)}k</span>
-            <div class="player-name">${perk.name}</div>
-            <div class="stat-container">
-                <div class="stat-line" style="background:rgba(0,0,0,0.5); font-size:0.7rem; color: #fff; white-space: normal;">${perk.desc}</div>
-            </div>
-        `;
-        pCard.onclick = () => {
-            if (runState.teamFunds >= perk.cost) {
-                runState.teamFunds -= perk.cost;
 
     const perksZone = document.getElementById('perks-pool-zone');
     perksZone.innerHTML = '';
