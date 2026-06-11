@@ -285,11 +285,22 @@ function renderDraftScreen() {
 
     const poolContainer = document.getElementById('draft-card-pool');
     poolContainer.innerHTML = '';
+let requiredReserve = 0;
+let otherPicksThisRound = 1 - draftState.roundPicks.length;
+let currentPos = draftState.schedule[draftState.round - 1];
 
-    let currentTotalPicks = ((draftState.round - 1) * 2) + draftState.roundPicks.length;
-    let futurePicksNeeded = 24 - currentTotalPicks - 1;
-    let minRequiredReserve = futurePicksNeeded * 50000;
-    let maxAffordableSalary = draftState.budget - minRequiredReserve;
+// 1. Calculate the reserve for the remaining pick in the CURRENT round
+if (otherPicksThisRound > 0) {
+    requiredReserve += (currentPos === "G" ? 75000 : 50000) * otherPicksThisRound;
+}
+
+// 2. Calculate the reserve for all FUTURE rounds
+for (let r = draftState.round; r < 12; r++) {
+    let pos = draftState.schedule[r];
+    requiredReserve += (pos === "G" ? 75000 : 50000) * 2;
+}
+
+let maxAffordableSalary = draftState.budget - requiredReserve;
 
     draftState.currentPool.forEach(player => {
         let isSelected = draftState.roundPicks.some(p => p.name === player.name && p.season === player.season);
