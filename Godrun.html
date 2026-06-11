@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Godrun: Pro 82-Game Grind</title>
+<style>
+:root {
+    --bg-ice: #f0f8ff;
+    --panel-white: #ffffff;
+    --rink-red: #dc2626;
+    --rink-blue: #2563eb;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --card-gold: #d97706;
+    --cash-green: #16a34a;
+    --perk-purple: #9333ea;
+    --perk-bg: #1e293b;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background-color: var(--bg-ice);
+    color: var(--text-main);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#game-window {
+width: 100%;
+max-width: 1100px;
+background: var(--panel-white);
+border-radius: 12px;
+padding: 20px;
+box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+border: 2px solid #e2e8f0;
+box-sizing: border-box;
+}
+
+.screen { display: none; }
+.active { display: block; }
+
+/* DRAFT SCREEN UI */
+.draft-header { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 15px 20px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 20px; border-left: 5px solid var(--rink-blue); font-weight: bold;}
+
+.hud-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
+    background: #f8fafc;
+    color: var(--text-main);
+    padding: 12px 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    border: 1px solid #cbd5e1;
+    border-left: 5px solid var(--rink-blue);
+}
+
+.gameplay-layout {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 25px;
+    margin-bottom: 20px;
+}
+
+.staff-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 140px;
+}
+
+.staff-slot {
+    width: 140px;
+    aspect-ratio: 2.5 / 3.5;
+    border: 3px dashed #cbd5e1;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    background: rgba(241, 245, 249, 0.6);
+    box-sizing: border-box;
+    text-align: center;
+    padding: 10px;
+    user-select: none;
+}
+
+.rink-column { flex-shrink: 0; }
+.rink-view {
+    border: 3px solid var(--rink-red);
+    border-radius: 20px;
+    background: #ffffff;
+    position: relative;
+    padding: 15px 25px;
+    box-shadow: inset 0 0 20px rgba(37, 99, 235, 0.05);
+}
+
+.lineup-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 140px);
+    grid-template-rows: repeat(2, auto);
+    gap: 15px;
+    justify-content: center;
+    min-height: 410px;
+}
+
+.position-slot {
+    width: 140px;
+    aspect-ratio: 2.5 / 3.5;
+    border: 3px dashed #cbd5e1;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #94a3b8;
+    background: rgba(241, 245, 249, 0.6);
+    box-sizing: border-box;
+    user-select: none;
+}
+
+.lineup-grid .hockey-card.selected {
+    transform: translateY(-4px);
+    box-shadow: 0 0 0 4px var(--rink-blue), 0 8px 20px rgba(37, 99, 235, 0.4);
+    margin: 0;
+}
+
+.info-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 160px;
+}
+
+.score-panel {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    border-top: 5px solid var(--rink-blue);
+}
+
+.piles-container-vertical { display: flex; justify-content: space-between; gap: 10px; }
+.action-button-vertical { display: flex; flex-direction: column; gap: 12px; }
+
+.action-btn {
+    background: var(--rink-blue);
+    color: #ffffff;
+    border: none;
+    padding: 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.action-btn:hover { background: #1d4ed8; }
+.action-btn:disabled { background: #94a3b8; cursor: not-allowed; color: #f1f5f9; box-shadow: none; }
+.discard-action-btn { background: var(--rink-red); color: white; }
+.discard-action-btn:hover { background: #b91c1c; }
+.discard-action-btn:disabled { background: #fca5a5; cursor: not-allowed; color: #fff; }
+
+#hand-zone {
+display: flex;
+flex-wrap: nowrap;
+justify-content: center;
+align-items: flex-end;
+height: 240px;
+margin-top: -10px;
+margin-bottom: 15px;
+gap: 0;
+}
+
+#hand-zone .hockey-card {
+margin-left: -75px;
+transform-origin: bottom center;
+--shift-x: 0px;
+transform: translateX(var(--shift-x)) translateY(var(--y, 0)) rotate(var(--rot, 0deg));
+transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+box-shadow: -8px 0 15px -5px rgba(0,0,0,0.4);
+}
+
+#hand-zone .hockey-card:first-child { margin-left: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+#hand-zone .hockey-card:hover { transform: translateY(-15px) scale(1.05) rotate(0deg); z-index: 100 !important; box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
+#hand-zone .hockey-card:hover ~ .hockey-card { --shift-x: 35px; }
+
+.card-container { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 15px 0; }
+
+.hockey-card {
+    border-radius: 8px;
+    width: 140px;
+    aspect-ratio: 2.5 / 3.5;
+    flex-shrink: 0;
+    padding: 8px;
+    text-align: center;
+    position: relative;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.hockey-card:active { cursor: grabbing; }
+
+.hockey-card.perk-card { background-color: var(--perk-bg) !important; color: #fff !important; border: 5px dashed var(--perk-purple) !important; cursor: pointer; }
+
+.hockey-card .pos-tag, .hockey-card .price-tag { position: absolute; top: 6px; padding: 2px 6px; border-radius: 4px; font-weight: bold; z-index: 5; }
+.hockey-card .pos-tag { left: 6px; background: rgba(0,0,0,0.85); color: #fff; font-size: 0.72rem; }
+.hockey-card .price-tag { right: 6px; background: #22c55e; color: #000; font-size: 0.68rem; }
+
+.team-tag {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 20px 0 2px 0;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    color: #ffffff;
+}
+
+.player-name {
+    font-size: 0.95rem;
+    font-weight: bold;
+    margin: 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    color: #ffffff;
+}
+.hockey-card.perk-card .player-name {
+    white-space: normal;
+    font-size: 0.85rem;
+    line-height: 1.15;
+    margin: 20px 0 5px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+.season-tag { font-size: 0.68rem; opacity: 0.85; margin-bottom: 6px; color: #ffffff; }
+
+.stat-container { margin-top: auto; display: flex; flex-direction: column; gap: 4px; }
+.hockey-card .stat-line {
+    font-size: 0.72rem;
+    background: rgba(0,0,0,0.45);
+    color: #ffffff;
+    margin: 0;
+    padding: 4px 5px;
+    border-radius: 3px;
+    text-align: left;
+}
+
+.pile {
+    width: 70px;
+    height: 98px;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: #1e293b;
+    border: 2px solid #cbd5e1;
+}
+.pile-label { margin-top: 5px; color: var(--text-muted); font-size: 0.75rem; font-weight: bold; text-align: center; }
+.draw-pile { background: #111; border: 3px solid #f97316; }
+.discard-pile { background: rgba(0,0,0,0.05); overflow: hidden; }
+.discard-pile .hockey-card {
+    transform: scale(0.5);
+    transform-origin: top left;
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+    margin: 0;
+    box-shadow: none;
+    border-radius: 12px;
+}
+
+.vs-divider {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--rink-red);
+    margin: 20px 0 10px 0;
+    border-bottom: 3px solid var(--rink-red);
+    padding-bottom: 10px;
+}
+.drag-over { background: rgba(37, 99, 235, 0.05) !important; border: 3px dashed var(--rink-blue) !important; }
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.85);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+.modal-content {
+    background: var(--panel-white);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 950px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    border: 3px solid var(--rink-blue);
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px; }
+#modal-card-grid { overflow-y: auto; align-items: flex-start; padding-bottom: 20px; gap: 15px; box-sizing: border-box; }
+#modal-card-grid .hockey-card { cursor: default; transform: none !important; }
+
+#toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+.toast {
+    background: #ffffff;
+    color: var(--text-main);
+    padding: 15px 20px;
+    border-radius: 6px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    font-weight: bold;
+    font-size: 0.9rem;
+    max-width: 300px;
+    border: 1px solid #e2e8f0;
+    transform: translateX(120%);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-left: 5px solid var(--rink-blue);
+}
+.toast.show { transform: translateX(0); }
+.toast.error { border-left-color: var(--rink-red); }
+.toast.success { border-left-color: var(--cash-green); }
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div id="deck-modal" class="modal-overlay" onclick="if(event.target===this) closeDeckModal()">
+<div class="modal-content">
+<div class="modal-header">
+<h2 id="modal-title" style="margin:0; color: var(--text-main);">The Roster</h2>
+<button class="action-btn" style="margin:0; padding: 8px 16px; font-size: 0.9rem; width:auto;" onclick="closeDeckModal()">Close</button>
+</div>
+<div id="modal-card-grid" class="card-container" style="flex-wrap: wrap; justify-content: flex-start;"></div>
+</div>
+</div>
+
+<div id="game-window">
+<div class="hud-bar">
+<div>Series: <span id="hud-opp-name">-</span></div>
+<div style="text-align: center;">Schedule: <span id="hud-games-played" style="color:var(--rink-blue)">0</span> / 82</div>
+<div style="text-align: right;">Funds: <span id="hud-funds" style="color:var(--cash-green)">$0</span></div>
+</div>
+
+<div id="scr-menu" class="screen active">
+<h1 style="font-size: 2.5rem; letter-spacing: 1px; text-align: center; color: var(--text-main);">GODRUN</h1>
+<p style="text-align:center; color:var(--text-muted); max-width:700px; margin: 0 auto 30px auto;">
+Initialize a deep 24-card roster starting with $2M funds. Manage a rigorous 82-game calendar using strategic discards to cycle your lines and clear the early point baselines.
+</p>
+
+<button id="start-game-btn" class="action-btn" onclick="initiateRun()" style="max-width: 300px; margin: 0 auto; display: block;">Start 82-Game Season Grind</button>
+</div>
+
+<div id="scr-initial-draft" class="screen">
+<h2 style="text-align:center; color:var(--text-main); margin-top: 0;">Inaugural Franchise Draft</h2>
+<p style="text-align:center; color:var(--text-muted); margin-top:-10px; font-size: 0.9rem;">Round <span id="draft-round-display">1</span> of 12. Drafting: <strong id="draft-pos-display">LW</strong>. Select exactly 2 players.</p>
+
+<div class="draft-header">
+<div>Cap Space: <span id="draft-budget-display" style="color:var(--cash-green); font-size:1.2rem;">$0</span></div>
+<div>Selected: <span id="draft-count-display">0</span> / 2</div>
+<button class="action-btn" id="finish-draft-btn" style="width:auto; padding: 8px 20px;" disabled onclick="confirmDraftRound()">Confirm Picks</button>
+</div>
+
+<div id="draft-card-pool" class="card-container"></div>
+</div>
+
+<div id="scr-gameplay" class="screen">
+<div class="gameplay-layout">
+<div class="staff-column" id="active-staff-zone"></div>
+
+<div class="rink-column">
+<div class="rink-view" id="rink-drop-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+<div id="selected-lineup-zone" class="lineup-grid"></div>
+</div>
+</div>
+
+<div class="info-column">
+<div class="score-panel">
+<h3 style="margin: 0 0 5px 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase;">Lineup Score</h3>
+<div id="current-score-calc" style="color: var(--rink-blue); font-size: 2.5rem; font-weight: 900; line-height: 1;">0</div>
+
+<div style="margin-top: 15px; font-size: 0.85rem; font-weight: 600; text-decoration: line-through; color:#94a3b8;">Base: <span id="hud-base-target">0</span></div>
+<div style="font-size: 0.85rem; font-weight: bold; color:var(--rink-red);">Adj Target: <span id="hud-target-score">0</span></div>
+
+<div id="earnings-text-info" style="font-size:0.75rem; color:var(--text-muted); margin-top:10px; line-height: 1.2;">Excess pts earn $1000 each</div>
+</div>
+
+<div class="piles-container-vertical">
+<div style="display:flex; flex-direction:column; align-items:center;">
+<div class="pile discard-pile" id="discard-pile-visual" onclick="openDeckModal('discard')"></div>
+<div class="pile-label" id="discard-count">Discard (0)</div>
+</div>
+<div style="display:flex; flex-direction:column; align-items:center;">
+<div class="pile draw-pile" onclick="openDeckModal('draw')"></div>
+<div class="pile-label" id="draw-count">The Roster (0)</div>
+</div>
+</div>
+
+<div class="action-button-vertical">
+<button class="action-btn discard-action-btn" id="discard-selected-btn" onclick="executeMassDiscard()" disabled>Send Down (3 Left)</button>
+<button class="action-btn" id="submit-lineup-btn" onclick="executeMatchup()" disabled>Play Lineup</button>
+</div>
+</div>
+</div>
+
+<div class="vs-divider">▲ THE BENCH (Game <span id="hud-hand-index">1</span> of <span id="hud-hand-total">6</span>) ▼</div>
+<div id="hand-zone" class="card-container"></div>
+</div>
+
+<div id="scr-draft" class="screen">
+<h2 style="text-align:center; color:var(--cash-green)">Intermission Free Agency</h2>
+<p style="text-align:center; color:var(--text-muted); margin-top:-5px;">Sign new talent or retool your coaching staff before starting the next series.</p>
+
+<h3 style="color:var(--rink-blue); text-align:center; margin-bottom:5px;">Available Free Agents (4 Slots)</h3>
+<div id="draft-pool-zone" class="card-container"></div>
+
+<h3 style="color:var(--perk-purple); text-align:center; margin-top:20px; margin-bottom:5px;">Coaching Staff & Systems Upgrades</h3>
+<div id="perks-pool-zone" class="card-container"></div>
+
+<button class="action-btn" style="background-color: #e2e8f0; color:var(--text-main); margin-top: 30px; max-width: 300px; margin-left: auto; margin-right: auto; display: block;" onclick="advanceStageAfterStore()">Advance to Next Series</button>
+</div>
+</div>
+
+<script src="roster_data.js"></script>
+<script src="data.js"></script>
+<script src="engine.js"></script>
+
+</body>
+</html>
