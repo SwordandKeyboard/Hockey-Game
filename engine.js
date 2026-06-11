@@ -724,7 +724,7 @@ function openStorefrontPhase() {
         return !runState.franchisePool.some(ownedCard => ownedCard.name === masterCard.name && ownedCard.season === masterCard.season);
     });
     
-    // Changed slice from 4 to 6 to increase storefront players
+    // Generates 6 storefront players
     let storefrontPlayers = nonOwnedPlayers.length > 0 ? shuffleArray([...nonOwnedPlayers]).slice(0, 6) : [];
 
     storefrontPlayers.forEach((player) => {
@@ -753,7 +753,6 @@ function openStorefrontPhase() {
     const categories = ['manager', 'coach', 'game_plan'];
     
     categories.forEach(cat => {
-        // Ensure you have updated MASTER_PERKS_POOL in data.js for this to work!
         let catPerks = MASTER_PERKS_POOL.filter(p => p.category === cat);
         let activeInSlot = runState.activePerks[cat];
         
@@ -772,6 +771,12 @@ function openStorefrontPhase() {
             targetLevel = Math.min(4, activeInSlot.level + 1); // Increase level if matching
         }
         
+        // Failsafe error log if data.js is out of sync
+        if (!rolledBasePerk || !rolledBasePerk.levels) {
+            console.error("CRITICAL: Perk data is missing the 'levels' array. Make sure data.js is updated!", rolledBasePerk);
+            return;
+        }
+
         let lvlData = rolledBasePerk.levels[targetLevel];
         let displayLvl = targetLevel + 1;
 
@@ -806,4 +811,5 @@ function openStorefrontPhase() {
         perksZone.appendChild(pCard);
     });
 }
+
 function advanceStageAfterStore() { runState.stageIndex++; beginStage(); }
