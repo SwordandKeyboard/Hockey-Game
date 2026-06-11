@@ -723,7 +723,7 @@ function openStorefrontPhase() {
     let nonOwnedPlayers = MASTER_REGULAR_POOL.filter(masterCard => {
         return !runState.franchisePool.some(ownedCard => ownedCard.name === masterCard.name && ownedCard.season === masterCard.season);
     });
-    let storefrontPlayers = nonOwnedPlayers.length > 0 ? shuffleArray([...nonOwnedPlayers]).slice(0, 4) : [];
+    let storefrontPlayers = nonOwnedPlayers.length > 0 ? shuffleArray([...nonOwnedPlayers]).slice(0, 6) : [];
 
     storefrontPlayers.forEach((player) => {
         const card = createCardUiNode(player, true);
