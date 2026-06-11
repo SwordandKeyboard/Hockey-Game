@@ -66,7 +66,7 @@ let runState = {
 let draftState = {
     budget: 2000000,
     round: 1,
-    schedule: ["C", "G", "C", "RW", "LW", "G", "D", "D", "D", "D", "LW", "RW"],
+    schedule: ["C", "G", "LW", "RW", "D", "G", "D", "RW", "LW", "C", "D", "D"],
     currentPool: [],
     roundPicks: [],
     seenPlayers: new Set()
