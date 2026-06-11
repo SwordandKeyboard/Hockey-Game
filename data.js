@@ -12,38 +12,101 @@ const ACTIVE_SEASONS = [
 
 // --- STATIC GAME DATA ---
 const MASTER_PERKS_POOL = [
-    // GMs
-    { id: "dynasty_1", name: "Dynasty Core I", category: "manager", desc: "If 3+ skaters share a franchise, Target reduces by 5%.", cost: 100000 },
-{ id: "dynasty_2", name: "Dynasty Core II", category: "manager", desc: "If 3+ skaters share a franchise, Target reduces by 10%.", cost: 150000 },
-{ id: "dynasty_3", name: "Dynasty Core III", category: "manager", desc: "If 3+ skaters share a franchise, Target reduces by 15%.", cost: 200000 },
-{ id: "hired_guns_1", name: "Hired Guns I", category: "manager", desc: "If all 5 skaters are from different franchises, gain +20 Pts.", cost: 90000 },
-{ id: "hired_guns_2", name: "Hired Guns II", category: "manager", desc: "If all 5 skaters are from different franchises, gain +35 Pts.", cost: 130000 },
-{ id: "hired_guns_3", name: "Hired Guns III", category: "manager", desc: "If all 5 skaters are from different franchises, gain +50 Pts.", cost: 180000 },
-{ id: "cap_crunch_1", name: "Cap Crunch I", category: "manager", desc: "Starting a Goalie with <$100k salary pays +$10k per cleared series.", cost: 80000 },
-{ id: "cap_crunch_2", name: "Cap Crunch II", category: "manager", desc: "Starting a Goalie with <$100k salary pays +$25k per cleared series.", cost: 120000 },
-{ id: "cap_crunch_3", name: "Cap Crunch III", category: "manager", desc: "Starting a Goalie with <$100k salary pays +$50k per cleared series.", cost: 160000 },
+    // GMs (Named after historical greats)
+    {
+        id: "gm_pollock", name: "Sam Pollock", category: "manager",
+        levels: [
+            { cost: 100000, desc: "If 3+ skaters share a franchise, Target reduces by 5%.", mult: 0.95 },
+            { cost: 150000, desc: "If 3+ skaters share a franchise, Target reduces by 8%.", mult: 0.92 },
+            { cost: 200000, desc: "If 3+ skaters share a franchise, Target reduces by 12%.", mult: 0.88 },
+            { cost: 260000, desc: "If 3+ skaters share a franchise, Target reduces by 18%.", mult: 0.82 },
+            { cost: 350000, desc: "If 3+ skaters share a franchise, Target reduces by 25%.", mult: 0.75 }
+        ]
+    },
+    {
+        id: "gm_sather", name: "Glen Sather", category: "manager",
+        levels: [
+            { cost: 90000, desc: "If all 5 skaters are from different franchises, gain +20 Pts.", bonus: 20 },
+            { cost: 130000, desc: "If all 5 skaters are from different franchises, gain +35 Pts.", bonus: 35 },
+            { cost: 180000, desc: "If all 5 skaters are from different franchises, gain +50 Pts.", bonus: 50 },
+            { cost: 250000, desc: "If all 5 skaters are from different franchises, gain +75 Pts.", bonus: 75 },
+            { cost: 320000, desc: "If all 5 skaters are from different franchises, gain +110 Pts.", bonus: 110 }
+        ]
+    },
+    {
+        id: "gm_lamoriello", name: "Lou Lamoriello", category: "manager",
+        levels: [
+            { cost: 80000, desc: "Starting a Goalie with <$100k salary pays +$10k per cleared series.", bonus: 10000 },
+            { cost: 120000, desc: "Starting a Goalie with <$100k salary pays +$25k per cleared series.", bonus: 25000 },
+            { cost: 160000, desc: "Starting a Goalie with <$100k salary pays +$50k per cleared series.", bonus: 50000 },
+            { cost: 220000, desc: "Starting a Goalie with <$100k salary pays +$80k per cleared series.", bonus: 80000 },
+            { cost: 300000, desc: "Starting a Goalie with <$100k salary pays +$150k per cleared series.", bonus: 150000 }
+        ]
+    },
 
-// Coaches
-{ id: "sniper_1", name: "Sniper Focus I", category: "coach", desc: "Every Goal (G) is worth 2.5 Pts.", cost: 110000 },
-{ id: "sniper_2", name: "Sniper Focus II", category: "coach", desc: "Every Goal (G) is worth 3.0 Pts.", cost: 160000 },
-{ id: "sniper_3", name: "Sniper Focus III", category: "coach", desc: "Every Goal (G) is worth 4.0 Pts.", cost: 220000 },
-{ id: "playmaker_1", name: "Playmaker Vision I", category: "coach", desc: "If A > G, the difference grants +1.0x Pts.", cost: 100000 },
-{ id: "playmaker_2", name: "Playmaker Vision II", category: "coach", desc: "If A > G, the difference grants +1.5x Pts.", cost: 150000 },
-{ id: "playmaker_3", name: "Playmaker Vision III", category: "coach", desc: "If A > G, the difference grants +2.0x Pts.", cost: 200000 },
-{ id: "shutout_1", name: "Shutout System I", category: "coach", desc: "If Goalie GAA < 2.50, Skater total +/- reduces target by 1.0x.", cost: 120000 },
-{ id: "shutout_2", name: "Shutout System II", category: "coach", desc: "If Goalie GAA < 2.50, Skater total +/- reduces target by 1.5x.", cost: 170000 },
-{ id: "shutout_3", name: "Shutout System III", category: "coach", desc: "If Goalie GAA < 2.30, Skater total +/- reduces target by 2.0x.", cost: 250000 },
+    // Coaches (Archetypes)
+    {
+        id: "coach_offensive", name: "Offensive Coordinator", category: "coach",
+        levels: [
+            { cost: 110000, desc: "Every Goal (G) is worth 2.5 Pts.", mult: 2.5 },
+            { cost: 160000, desc: "Every Goal (G) is worth 3.0 Pts.", mult: 3.0 },
+            { cost: 220000, desc: "Every Goal (G) is worth 3.5 Pts.", mult: 3.5 },
+            { cost: 300000, desc: "Every Goal (G) is worth 4.2 Pts.", mult: 4.2 },
+            { cost: 400000, desc: "Every Goal (G) is worth 5.5 Pts.", mult: 5.5 }
+        ]
+    },
+    {
+        id: "coach_playmaker", name: "Playmaking Specialist", category: "coach",
+        levels: [
+            { cost: 100000, desc: "If A > G, the difference grants +1.0x Pts.", mult: 1.0 },
+            { cost: 150000, desc: "If A > G, the difference grants +1.5x Pts.", mult: 1.5 },
+            { cost: 200000, desc: "If A > G, the difference grants +2.0x Pts.", mult: 2.0 },
+            { cost: 260000, desc: "If A > G, the difference grants +2.6x Pts.", mult: 2.6 },
+            { cost: 350000, desc: "If A > G, the difference grants +3.5x Pts.", mult: 3.5 }
+        ]
+    },
+    {
+        id: "coach_goalie", name: "Goalie Whisperer", category: "coach",
+        levels: [
+            { cost: 120000, desc: "If Goalie GAA < 2.50, Skater total +/- reduces target by 1.0x.", mult: 1.0, gaa: 2.50 },
+            { cost: 170000, desc: "If Goalie GAA < 2.50, Skater total +/- reduces target by 1.5x.", mult: 1.5, gaa: 2.50 },
+            { cost: 250000, desc: "If Goalie GAA < 2.30, Skater total +/- reduces target by 2.0x.", mult: 2.0, gaa: 2.30 },
+            { cost: 320000, desc: "If Goalie GAA < 2.30, Skater total +/- reduces target by 2.8x.", mult: 2.8, gaa: 2.30 },
+            { cost: 450000, desc: "If Goalie GAA < 2.15, Skater total +/- reduces target by 4.0x.", mult: 4.0, gaa: 2.15 }
+        ]
+    },
 
-// Game Plans
-{ id: "trap_1", name: "The Trap I", category: "game_plan", desc: "Goalie Target Reduction +3%. Centers generate 10% fewer Pts.", cost: 90000 },
-{ id: "trap_2", name: "The Trap II", category: "game_plan", desc: "Goalie Target Reduction +5%. Centers generate 15% fewer Pts.", cost: 130000 },
-{ id: "trap_3", name: "The Trap III", category: "game_plan", desc: "Goalie Target Reduction +8%. Centers generate 20% fewer Pts.", cost: 180000 },
-{ id: "wing_lock_1", name: "Wing Lock I", category: "game_plan", desc: "Active LW and RW gain +10 Pts flat.", cost: 85000 },
-{ id: "wing_lock_2", name: "Wing Lock II", category: "game_plan", desc: "Active LW and RW gain +15 Pts flat.", cost: 125000 },
-{ id: "wing_lock_3", name: "Wing Lock III", category: "game_plan", desc: "Active LW and RW gain +25 Pts flat.", cost: 175000 },
-{ id: "forecheck_1", name: "Heavy Forecheck I", category: "game_plan", desc: "Skaters with G > A gain +10 Pts flat.", cost: 80000 },
-{ id: "forecheck_2", name: "Heavy Forecheck II", category: "game_plan", desc: "Skaters with G > A gain +20 Pts flat.", cost: 120000 },
-{ id: "forecheck_3", name: "Heavy Forecheck III", category: "game_plan", desc: "Skaters with G > A gain +35 Pts flat.", cost: 170000 }
+    // Game Plans
+    {
+        id: "gp_trap", name: "The Trap", category: "game_plan",
+        levels: [
+            { cost: 90000, desc: "Goalie Target Reduction +3%. Centers generate 10% fewer Pts.", gMult: 0.03, cMult: 0.90 },
+            { cost: 130000, desc: "Goalie Target Reduction +5%. Centers generate 15% fewer Pts.", gMult: 0.05, cMult: 0.85 },
+            { cost: 180000, desc: "Goalie Target Reduction +8%. Centers generate 20% fewer Pts.", gMult: 0.08, cMult: 0.80 },
+            { cost: 240000, desc: "Goalie Target Reduction +12%. Centers generate 25% fewer Pts.", gMult: 0.12, cMult: 0.75 },
+            { cost: 320000, desc: "Goalie Target Reduction +18%. Centers generate 30% fewer Pts.", gMult: 0.18, cMult: 0.70 }
+        ]
+    },
+    {
+        id: "gp_winglock", name: "Wing Lock", category: "game_plan",
+        levels: [
+            { cost: 85000, desc: "Active LW and RW gain +10 Pts flat.", bonus: 10 },
+            { cost: 125000, desc: "Active LW and RW gain +15 Pts flat.", bonus: 15 },
+            { cost: 175000, desc: "Active LW and RW gain +25 Pts flat.", bonus: 25 },
+            { cost: 230000, desc: "Active LW and RW gain +38 Pts flat.", bonus: 38 },
+            { cost: 300000, desc: "Active LW and RW gain +55 Pts flat.", bonus: 55 }
+        ]
+    },
+    {
+        id: "gp_forecheck", name: "Heavy Forecheck", category: "game_plan",
+        levels: [
+            { cost: 80000, desc: "Skaters with G > A gain +10 Pts flat.", bonus: 10 },
+            { cost: 120000, desc: "Skaters with G > A gain +20 Pts flat.", bonus: 20 },
+            { cost: 170000, desc: "Skaters with G > A gain +35 Pts flat.", bonus: 35 },
+            { cost: 220000, desc: "Skaters with G > A gain +55 Pts flat.", bonus: 55 },
+            { cost: 290000, desc: "Skaters with G > A gain +80 Pts flat.", bonus: 80 }
+        ]
+    }
 ];
 
 const HISTORICAL_STAGES =
