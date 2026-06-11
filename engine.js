@@ -369,15 +369,24 @@ function executeMassDiscard() {
     const sendDownCount = runState.selectedLineup.length;
     if (sendDownCount === 0 || sendDownCount > runState.discardsLeft) return;
 
-    let totalRefund = 0;
+    // Calculate Waiver Cost (25% of salary)
+    let totalCost = 0;
+    runState.selectedLineup.forEach(discardedCard => {
+        totalCost += Math.floor(getPlayerSalary(discardedCard) * 0.25);
+    });
+
+    if (runState.teamFunds < totalCost) {
+        showNotification(`Insufficient funds! Need $${totalCost.toLocaleString()}`, "error");
+        return;
+    }
+
+    // Deduct the cost
+    runState.teamFunds -= totalCost;
 
     runState.selectedLineup.forEach(discardedCard => {
         let targetIdx = runState.currentHand.findIndex(c => c.name === discardedCard.name && c.season === discardedCard.season);
         let deckIdx = runState.runtimeDeck.findIndex(c => c.name === discardedCard.name && c.season === discardedCard.season);
         let franchiseIdx = runState.franchisePool.findIndex(c => c.name === discardedCard.name && c.season === discardedCard.season);
-
-        let refund = Math.floor(getPlayerSalary(discardedCard) / 2);
-        totalRefund += refund;
 
         if (deckIdx !== -1) runState.runtimeDeck.splice(deckIdx, 1);
         if (franchiseIdx !== -1) runState.franchisePool.splice(franchiseIdx, 1);
@@ -397,11 +406,10 @@ function executeMassDiscard() {
         }
     });
 
-    runState.teamFunds += totalRefund;
     runState.discardsLeft -= sendDownCount;
     runState.selectedLineup = [];
 
-    showNotification(`Sent down player(s) for a $${totalRefund.toLocaleString()} refund!`, "success");
+    showNotification(`Waived player(s) for a fee of $${totalCost.toLocaleString()}!`, "info");
 
     renderHandSelectionScreen();
     updateHudDisplay();
@@ -522,12 +530,25 @@ function renderSelectedLineupZone() {
     DOM.submitBtn.disabled = !validateLineupStructure();
 
     let willDropBelow18 = (runState.franchisePool.length - selectedCount) < 18;
-    DOM.discardBtn.innerText = `Send Down Selected (${3 - runState.discardsLeft} Used | ${runState.discardsLeft} Left)`;
+    
+    // Calculate display cost
+    let discardCost = 0;
+    runState.selectedLineup.forEach(p => discardCost += Math.floor(getPlayerSalary(p) * 0.25));
 
-    if (selectedCount === 0 || selectedCount > runState.discardsLeft || willDropBelow18) {
+    // Update button text with cost
+    if (selectedCount > 0) {
+        DOM.discardBtn.innerText = `Waive Selected (-$${(discardCost/1000)}k) | ${runState.discardsLeft} Left`;
+    } else {
+        DOM.discardBtn.innerText = `Select to Waive (${runState.discardsLeft} Left)`;
+    }
+
+    // Advanced Validation for disabling the button
+    if (selectedCount === 0 || selectedCount > runState.discardsLeft || willDropBelow18 || runState.teamFunds < discardCost) {
         DOM.discardBtn.disabled = true;
         if (willDropBelow18 && selectedCount > 0) {
             DOM.discardBtn.innerText = "Roster Min Reached (18)";
+        } else if (runState.teamFunds < discardCost && selectedCount > 0) {
+            DOM.discardBtn.innerText = "Insufficient Funds";
         }
     } else {
         DOM.discardBtn.disabled = false;
