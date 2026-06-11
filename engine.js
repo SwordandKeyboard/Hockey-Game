@@ -346,10 +346,9 @@ function confirmDraftRound() {
         generateDraftPool();
     }
 }
-
 function finishInitialDraft() {
-    // Replaced structuredClone with bulletproof JSON deep copy
-    runState.runtimeDeck = JSON.parse(JSON.stringify(runState.franchisePool));
+    // Bypass deep cloning entirely. A simple shallow copy is crash-proof.
+    runState.runtimeDeck = [...runState.franchisePool];
     runState.teamFunds = draftState.budget;
     beginStage();
 }
@@ -738,14 +737,14 @@ function openStorefrontPhase() {
 
     storefrontPlayers.forEach((player) => {
         const card = createCardUiNode(player, true);
-        card.onclick = () => {
+       card.onclick = () => {
             const salaryCost = getPlayerSalary(player);
             if (runState.teamFunds >= salaryCost) {
                 runState.teamFunds -= salaryCost;
                 runState.franchisePool.push(player);
                 
-                // Replaced structuredClone with safe JSON deep copy
-                runState.runtimeDeck.push(JSON.parse(JSON.stringify(player)));
+                // Push the direct reference instead of a clone
+                runState.runtimeDeck.push(player);
                 
                 showNotification(`Signed ${player.name}!`, "success");
                 card.style.opacity = "0.3";
