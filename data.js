@@ -109,20 +109,25 @@ const MASTER_PERKS_POOL = [
     }
 ];
 
-const HISTORICAL_STAGES =
-    [
-        { name: "October Road Opener", gamesCount: 5, target: 280 },  // Very easy, lets you get to the first store
-        { name: "November Home Stand", gamesCount: 5, target: 320 },
-        { name: "Western Canada Swing", gamesCount: 6, target: 380 },
-        { name: "December Cold Front", gamesCount: 6, target: 450 },  // Mid-game ramp starts
-        { name: "Holiday Roster Gauntlet", gamesCount: 6, target: 530 },
-        { name: "January Winter Grind", gamesCount: 6, target: 620 },
-        { name: "All-Star Break Push", gamesCount: 6, target: 720 },
-        { name: "February Stadium Series", gamesCount: 6, target: 800 },
-        { name: "Trade Deadline Madness", gamesCount: 6, target: 880 }, // Late-game brutality starts
-        { name: "March Playoff Push", gamesCount: 6, target: 950 },
-        { name: "Northeastern Rivalries", gamesCount: 6, target: 1020 },
-        { name: "California Road Trip", gamesCount: 6, target: 1100 },
-        { name: "April Division Deciders", gamesCount: 6, target: 1180 },
-        { name: "Season Finale Gridlock", gamesCount: 6, target: 1250 } // Requires massive Tier 3 perk synergy
-    ];
+const HISTORICAL_STAGES = [
+    { name: "Opening Night Homestand", gamesCount: 4, target: 280 },  // Very easy, introduces mechanics
+    { name: "First Road Trip", gamesCount: 4, target: 330 },
+    { name: "October Division Clashes", gamesCount: 3, target: 380 }, // Short series, fast store trip
+    { name: "Halloween Gauntlet", gamesCount: 5, target: 440 },
+    { name: "November Chill", gamesCount: 4, target: 490 },
+    { name: "Thanksgiving Showdown", gamesCount: 4, target: 540 },
+    { name: "Early December Grind", gamesCount: 6, target: 600 },     // The first long haul
+    { name: "Holiday Roster Freeze", gamesCount: 4, target: 650 },
+    { name: "Winter Classic Preview", gamesCount: 3, target: 700 },
+    { name: "New Year's Resolution", gamesCount: 4, target: 750 },
+    { name: "Mid-Season Slump", gamesCount: 4, target: 800 },
+    { name: "All-Star Break Push", gamesCount: 5, target: 860 },
+    { name: "February Freeze", gamesCount: 4, target: 910 },
+    { name: "Stadium Series", gamesCount: 3, target: 960 },           // Fast turnaround before the trade deadline
+    { name: "Trade Deadline Madness", gamesCount: 4, target: 1020 },
+    { name: "March Playoff Push", gamesCount: 6, target: 1080 },      // Late-game brutality starts
+    { name: "Spring Awakening", gamesCount: 4, target: 1140 },
+    { name: "Northeastern Rivalries", gamesCount: 4, target: 1190 },
+    { name: "Division Deciders", gamesCount: 3, target: 1250 },
+    { name: "Season Finale Gridlock", gamesCount: 4, target: 1320 }   // Requires maximum perk synergy
+];
