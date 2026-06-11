@@ -10,9 +10,6 @@ const ACTIVE_SEASONS = [
 "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"
 ];
 
-// Create the empty global pool for the modular files to fill
-var MASTER_REGULAR_POOL = [];
-
 // --- STATIC GAME DATA ---
 const MASTER_PERKS_POOL = [
     // GMs
@@ -51,8 +48,8 @@ const MASTER_PERKS_POOL = [
 
 const HISTORICAL_STAGES =
     [
-        { name: "October Road Opener", gamesCount: 6, target: 280 },  // Very easy, lets you get to the first store
-        { name: "November Home Stand", gamesCount: 6, target: 320 },
+        { name: "October Road Opener", gamesCount: 5, target: 280 },  // Very easy, lets you get to the first store
+        { name: "November Home Stand", gamesCount: 5, target: 320 },
         { name: "Western Canada Swing", gamesCount: 6, target: 380 },
         { name: "December Cold Front", gamesCount: 6, target: 450 },  // Mid-game ramp starts
         { name: "Holiday Roster Gauntlet", gamesCount: 6, target: 530 },
@@ -63,6 +60,6 @@ const HISTORICAL_STAGES =
         { name: "March Playoff Push", gamesCount: 6, target: 950 },
         { name: "Northeastern Rivalries", gamesCount: 6, target: 1020 },
         { name: "California Road Trip", gamesCount: 6, target: 1100 },
-        { name: "April Division Deciders", gamesCount: 5, target: 1180 },
-        { name: "Season Finale Gridlock", gamesCount: 5, target: 1250 } // Requires massive Tier 3 perk synergy
+        { name: "April Division Deciders", gamesCount: 6, target: 1180 },
+        { name: "Season Finale Gridlock", gamesCount: 6, target: 1250 } // Requires massive Tier 3 perk synergy
     ];
