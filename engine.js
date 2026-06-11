@@ -723,6 +723,8 @@ function openStorefrontPhase() {
     let nonOwnedPlayers = MASTER_REGULAR_POOL.filter(masterCard => {
         return !runState.franchisePool.some(ownedCard => ownedCard.name === masterCard.name && ownedCard.season === masterCard.season);
     });
+    
+    // Changed slice from 4 to 6 to increase storefront players
     let storefrontPlayers = nonOwnedPlayers.length > 0 ? shuffleArray([...nonOwnedPlayers]).slice(0, 6) : [];
 
     storefrontPlayers.forEach((player) => {
@@ -732,8 +734,6 @@ function openStorefrontPhase() {
             if (runState.teamFunds >= salaryCost) {
                 runState.teamFunds -= salaryCost;
                 runState.franchisePool.push(player);
-                
-                // Push the direct reference instead of a clone
                 runState.runtimeDeck.push(player);
                 
                 showNotification(`Signed ${player.name}!`, "success");
@@ -747,12 +747,13 @@ function openStorefrontPhase() {
         playerZone.appendChild(card);
     });
 
-  const perksZone = document.getElementById('perks-pool-zone');
+    const perksZone = document.getElementById('perks-pool-zone');
     perksZone.innerHTML = '';
 
     const categories = ['manager', 'coach', 'game_plan'];
     
     categories.forEach(cat => {
+        // Ensure you have updated MASTER_PERKS_POOL in data.js for this to work!
         let catPerks = MASTER_PERKS_POOL.filter(p => p.category === cat);
         let activeInSlot = runState.activePerks[cat];
         
@@ -762,7 +763,6 @@ function openStorefrontPhase() {
             return true;
         });
         
-        // If everything somehow maxed out, just fallback to display something harmless
         if (validCatPerks.length === 0) validCatPerks = catPerks;
 
         let rolledBasePerk = validCatPerks[Math.floor(Math.random() * validCatPerks.length)];
@@ -804,35 +804,6 @@ function openStorefrontPhase() {
             }
         };
         perksZone.appendChild(pCard);
-    }););
-
-    let randomPerksSelection = validPerks.length > 0 ? shuffleArray([...validPerks]).slice(0, 3) : [];
-
-    randomPerksSelection.forEach((perk) => {
-        const pCard = document.createElement('div');
-        pCard.className = "hockey-card perk-card";
-        pCard.innerHTML = `
-            <span class="pos-tag" style="background:#7c3aed;">${perk.category.toUpperCase().replace("_", " ")}</span>
-            <span class="price-tag">$${(perk.cost/1000)}k</span>
-            <div class="player-name">${perk.name}</div>
-            <div class="stat-container">
-                <div class="stat-line" style="background:rgba(0,0,0,0.5); font-size:0.7rem; color: #fff; white-space: normal;">${perk.desc}</div>
-            </div>
-        `;
-        pCard.onclick = () => {
-            if (runState.teamFunds >= perk.cost) {
-                runState.teamFunds -= perk.cost;
-                runState.activePerks[perk.category] = perk;
-                showNotification(`${perk.name} active!`, "success");
-                pCard.style.opacity = "0.3";
-                pCard.onclick = null;
-                updateHudDisplay();
-            } else {
-                showNotification("Insufficient funds!", "error");
-            }
-        };
-        perksZone.appendChild(pCard);
     });
 }
-
 function advanceStageAfterStore() { runState.stageIndex++; beginStage(); }
