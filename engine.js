@@ -128,8 +128,7 @@ function calculateMatchupStats(lineupArray) {
     let goalie = lineupArray.find(p => p.pos === "G");
     let baseTarget = HISTORICAL_STAGES[runState.stageIndex]?.target || 0;
 
-    let activePerks = Object.values(runState.activePerks).filter(Boolean);
-    const hasPerk = (id) => activePerks.some(p => p.id === id);
+    let activePerks = runState.activePerks;
 
     let totalScore = 0;
     let pmSum = 0;
@@ -140,45 +139,32 @@ function calculateMatchupStats(lineupArray) {
 
     skaters.forEach(p => {
         let gVal = 2;
-        if (hasPerk('sniper_1')) gVal = 2.5;
-        if (hasPerk('sniper_2')) gVal = 3.0;
-        if (hasPerk('sniper_3')) gVal = 4.0;
+        if (activePerks.coach?.id === 'coach_offensive') gVal = activePerks.coach.data.mult;
 
         let pts = (p.stats.G * gVal) + p.stats.A;
 
-        if (p.stats.A > p.stats.G) {
-            let diff = p.stats.A - p.stats.G;
-            if (hasPerk('playmaker_1')) pts += (diff * 1.0);
-            if (hasPerk('playmaker_2')) pts += (diff * 1.5);
-            if (hasPerk('playmaker_3')) pts += (diff * 2.0);
+        if (p.stats.A > p.stats.G && activePerks.coach?.id === 'coach_playmaker') {
+            pts += (p.stats.A - p.stats.G) * activePerks.coach.data.mult;
         }
 
-        if (p.stats.G > p.stats.A) {
-            if (hasPerk('forecheck_1')) pts += 10;
-            if (hasPerk('forecheck_2')) pts += 20;
-            if (hasPerk('forecheck_3')) pts += 35;
+        if (p.stats.G > p.stats.A && activePerks.game_plan?.id === 'gp_forecheck') {
+            pts += activePerks.game_plan.data.bonus;
         }
 
-        if (p.pos === 'LW' || p.pos === 'RW') {
-            if (hasPerk('wing_lock_1')) pts += 10;
-            if (hasPerk('wing_lock_2')) pts += 15;
-            if (hasPerk('wing_lock_3')) pts += 25;
+        if ((p.pos === 'LW' || p.pos === 'RW') && activePerks.game_plan?.id === 'gp_winglock') {
+            pts += activePerks.game_plan.data.bonus;
         }
 
-        if (p.pos === 'C') {
-            if (hasPerk('trap_1')) pts *= 0.90;
-            if (hasPerk('trap_2')) pts *= 0.85;
-            if (hasPerk('trap_3')) pts *= 0.80;
+        if (p.pos === 'C' && activePerks.game_plan?.id === 'gp_trap') {
+            pts *= activePerks.game_plan.data.cMult;
         }
 
         totalScore += pts;
         pmSum += p.stats.plusMinus;
     });
 
-    if (uniqueFranchises === 5 && skaters.length === 5) {
-        if (hasPerk('hired_guns_1')) totalScore += 20;
-        if (hasPerk('hired_guns_2')) totalScore += 35;
-        if (hasPerk('hired_guns_3')) totalScore += 50;
+    if (uniqueFranchises === 5 && skaters.length === 5 && activePerks.manager?.id === 'gm_sather') {
+        totalScore += activePerks.manager.data.bonus;
     }
 
     let adjTarget = baseTarget;
@@ -188,19 +174,15 @@ function calculateMatchupStats(lineupArray) {
         let svDiff = goalie.stats.SV - svBase;
         let reductionPct = (svDiff * 5);
 
-        if (hasPerk('trap_1')) reductionPct += 0.03;
-        if (hasPerk('trap_2')) reductionPct += 0.05;
-        if (hasPerk('trap_3')) reductionPct += 0.08;
+        if (activePerks.game_plan?.id === 'gp_trap') {
+            reductionPct += activePerks.game_plan.data.gMult;
+        }
 
         adjTarget = adjTarget * (1 - reductionPct);
 
         let pmMult = 0;
-        if (goalie.stats.GAA < 2.50) {
-            if (hasPerk('shutout_1')) pmMult = 1.0;
-            if (hasPerk('shutout_2')) pmMult = 1.5;
-        }
-        if (goalie.stats.GAA < 2.30 && hasPerk('shutout_3')) {
-            pmMult = 2.0;
+        if (activePerks.coach?.id === 'coach_goalie' && goalie.stats.GAA < activePerks.coach.data.gaa) {
+            pmMult = activePerks.coach.data.mult;
         }
 
         if (pmSum > 0 && pmMult > 0) {
@@ -208,10 +190,8 @@ function calculateMatchupStats(lineupArray) {
         }
     }
 
-    if (maxSameTeam >= 3) {
-        if (hasPerk('dynasty_1')) adjTarget *= 0.95;
-        if (hasPerk('dynasty_2')) adjTarget *= 0.90;
-        if (hasPerk('dynasty_3')) adjTarget *= 0.85;
+    if (maxSameTeam >= 3 && activePerks.manager?.id === 'gm_pollock') {
+        adjTarget *= activePerks.manager.data.mult;
     }
 
     return {
@@ -443,16 +423,18 @@ function executeMatchup() {
     let stage = HISTORICAL_STAGES[runState.stageIndex];
 
     if (matchupStats.score >= matchupStats.target) {
-        let surplus = matchupStats.score - matchupStats.target;
+       let surplus = matchupStats.score - matchupStats.target;
         let earnings = surplus * 1000;
 
-        let activePerks = Object.values(runState.activePerks).filter(Boolean);
-        if (activePerks.some(p => p.id.startsWith('cap_crunch'))) {
+        let activePerks = runState.activePerks;
+        if (activePerks.manager?.id === 'gm_lamoriello') {
             let goalie = runState.selectedLineup.find(p => p.pos === 'G');
             if (goalie && getPlayerSalary(goalie) <= 100000 && runState.handIndex === stage.gamesCount - 1) {
-                if (activePerks.some(p => p.id === 'cap_crunch_1')) earnings += 10000;
-                if (activePerks.some(p => p.id === 'cap_crunch_2')) earnings += 25000;
-                if (activePerks.some(p => p.id === 'cap_crunch_3')) earnings += 50000;
+                earnings += activePerks.manager.data.bonus;
+            }
+        }
+
+        runState.teamFunds += earnings;
             }
         }
 
@@ -475,7 +457,7 @@ function executeMatchup() {
         runState.totalGamesPlayed++;
 
         if (runState.totalGamesPlayed >= 82) {
-            showNotification(`Dynasty validated! Capital retained: $${runState.teamFunds.toLocaleString()}`, "success");
+            showNotification(`They said it couldn't be done.! Capital retained: $${runState.teamFunds.toLocaleString()}`, "success");
             switchView('scr-menu');
             return;
         }
@@ -640,15 +622,15 @@ function renderActiveStaff() {
 
     roles.forEach(role => {
         const perk = runState.activePerks[role.key];
-        if (perk) {
+        if (perk && perk.data) {
             const pCard = document.createElement('div');
             pCard.className = "hockey-card perk-card";
             pCard.style.cursor = "default";
             pCard.innerHTML = `
-                <span class="pos-tag" style="background:#7c3aed;">${role.label.toUpperCase()}</span>
+                <span class="pos-tag" style="background:#7c3aed;">${role.label.toUpperCase()} LVL ${perk.level + 1}</span>
                 <div class="player-name">${perk.name}</div>
                 <div class="stat-container">
-                    <div class="stat-line" style="background:rgba(0,0,0,0.5); font-size:0.7rem; color: #fff; white-space: normal; padding: 6px;">${perk.desc}</div>
+                    <div class="stat-line" style="background:rgba(0,0,0,0.5); font-size:0.7rem; color: #fff; white-space: normal; padding: 6px;">${perk.data.desc}</div>
                 </div>
             `;
             DOM.staffZone.appendChild(pCard);
@@ -765,13 +747,64 @@ function openStorefrontPhase() {
         playerZone.appendChild(card);
     });
 
-    const perksZone = document.getElementById('perks-pool-zone');
+  const perksZone = document.getElementById('perks-pool-zone');
     perksZone.innerHTML = '';
 
-    let validPerks = MASTER_PERKS_POOL.filter(p => {
-        let activeInSlot = runState.activePerks[p.category];
-        return !activeInSlot || activeInSlot.id !== p.id;
-    });
+    const categories = ['manager', 'coach', 'game_plan'];
+    
+    categories.forEach(cat => {
+        let catPerks = MASTER_PERKS_POOL.filter(p => p.category === cat);
+        let activeInSlot = runState.activePerks[cat];
+        
+        // Exclude perk if it's already at max level (Level 5 / index 4)
+        let validCatPerks = catPerks.filter(p => {
+            if (activeInSlot && activeInSlot.id === p.id && activeInSlot.level >= 4) return false;
+            return true;
+        });
+        
+        // If everything somehow maxed out, just fallback to display something harmless
+        if (validCatPerks.length === 0) validCatPerks = catPerks;
+
+        let rolledBasePerk = validCatPerks[Math.floor(Math.random() * validCatPerks.length)];
+        
+        let targetLevel = 0;
+        if (activeInSlot && activeInSlot.id === rolledBasePerk.id) {
+            targetLevel = Math.min(4, activeInSlot.level + 1); // Increase level if matching
+        }
+        
+        let lvlData = rolledBasePerk.levels[targetLevel];
+        let displayLvl = targetLevel + 1;
+
+        const pCard = document.createElement('div');
+        pCard.className = "hockey-card perk-card";
+        pCard.innerHTML = `
+            <span class="pos-tag" style="background:#7c3aed;">${rolledBasePerk.category.toUpperCase().replace("_", " ")} LVL ${displayLvl}</span>
+            <span class="price-tag">$${(lvlData.cost/1000)}k</span>
+            <div class="player-name">${rolledBasePerk.name}</div>
+            <div class="stat-container">
+                <div class="stat-line" style="background:rgba(0,0,0,0.5); font-size:0.7rem; color: #fff; white-space: normal;">${lvlData.desc}</div>
+            </div>
+        `;
+        
+        pCard.onclick = () => {
+            if (runState.teamFunds >= lvlData.cost) {
+                runState.teamFunds -= lvlData.cost;
+                runState.activePerks[rolledBasePerk.category] = { 
+                    id: rolledBasePerk.id, 
+                    level: targetLevel, 
+                    data: lvlData, 
+                    name: rolledBasePerk.name 
+                };
+                showNotification(`${rolledBasePerk.name} Lvl ${displayLvl} active!`, "success");
+                pCard.style.opacity = "0.3";
+                pCard.onclick = null;
+                updateHudDisplay();
+            } else {
+                showNotification("Insufficient funds!", "error");
+            }
+        };
+        perksZone.appendChild(pCard);
+    }););
 
     let randomPerksSelection = validPerks.length > 0 ? shuffleArray([...validPerks]).slice(0, 3) : [];
 
