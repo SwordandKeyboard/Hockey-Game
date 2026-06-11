@@ -5,6 +5,54 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Godrun: Pro 82-Game Grind</title>
 <style>
+    /* --- MOBILE OPTIMIZATION --- */
+@media (max-width: 768px) {
+    /* Stack the top HUD */
+    .hud-bar {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    /* Stack the main arena layout vertically */
+    .gameplay-layout {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    /* Make columns full width */
+    .info-column, .staff-column {
+        width: 100%;
+        align-items: center;
+    }
+
+    /* Shrink the rink grid to fit phone screens */
+    .lineup-grid {
+        grid-template-columns: repeat(3, 100px);
+        gap: 10px;
+        min-height: auto;
+    }
+
+    /* Shrink the cards universally for mobile */
+    .hockey-card, .position-slot, .staff-slot {
+        width: 100px;
+    }
+
+    /* Flatten the hand zone so it doesn't run off screen */
+    #hand-zone {
+        flex-wrap: wrap;
+        height: auto;
+        margin-top: 20px;
+    }
+    
+    #hand-zone .hockey-card {
+        margin: 5px;
+        transform: none !important; /* Disable the desktop fan spread */
+    }
+    #hand-zone .hockey-card:hover {
+        transform: scale(1.05) !important;
+    }
+}
 :root {
     --bg-ice: #f0f8ff;
     --panel-white: #ffffff;
