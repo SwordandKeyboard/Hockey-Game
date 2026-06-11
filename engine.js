@@ -207,7 +207,6 @@ function switchView(viewId) {
 
 // --- DRAFT SCREEN LOGIC ---
 function initiateRun() {
-    // 1. Reset all stats and pools for a fresh run
     runState.stageIndex = 0;
     runState.handIndex = 0;
     runState.totalGamesPlayed = 0;
@@ -217,13 +216,11 @@ function initiateRun() {
     runState.currentHand = [];
     runState.activePerks = { manager: null, coach: null, game_plan: null };
 
-    // 2. Reset the draft state
     draftState.budget = 2000000;
     draftState.round = 1;
     draftState.roundPicks = [];
     draftState.seenPlayers = new Set();
 
-    // 3. Jump to the draft screen and roll the first pack of players
     switchView('scr-initial-draft');
     generateDraftPool();
 }
@@ -273,12 +270,10 @@ function renderDraftScreen() {
     let otherPicksThisRound = 2 - draftState.roundPicks.length;
     let currentPos = draftState.schedule[draftState.round - 1];
 
-    // 1. Calculate the reserve for the remaining pick in the CURRENT round
     if (otherPicksThisRound > 0) {
         requiredReserve += (currentPos === "G" ? 75000 : 50000) * otherPicksThisRound;
     }
 
-    // 2. Calculate the reserve for all FUTURE rounds
     for (let r = draftState.round; r < 12; r++) {
         let pos = draftState.schedule[r];
         requiredReserve += (pos === "G" ? 75000 : 50000) * 2;
@@ -318,26 +313,20 @@ function renderDraftScreen() {
 }
 
 function confirmDraftRound() {
-    // 1. Move the selected players to your franchise pool
     runState.franchisePool.push(...draftState.roundPicks);
     draftState.roundPicks = [];
 
-    // 2. Strictly lock the exit to exactly Round 12
     if (draftState.round === 12) {
         finishInitialDraft();
     } else {
-        // 3. If it's 11 or lower, advance the round and generate new players
         draftState.round++;
         generateDraftPool();
     }
 }
 
 function finishInitialDraft() {
-    // Clean, crash-proof roster copy
     runState.runtimeDeck = [...runState.franchisePool];
     runState.teamFunds = draftState.budget;
-
-    // Start the game loop!
     beginStage();
 }
 
@@ -423,7 +412,7 @@ function executeMatchup() {
     let stage = HISTORICAL_STAGES[runState.stageIndex];
 
     if (matchupStats.score >= matchupStats.target) {
-       let surplus = matchupStats.score - matchupStats.target;
+        let surplus = matchupStats.score - matchupStats.target;
         let earnings = surplus * 1000;
 
         let activePerks = runState.activePerks;
@@ -431,10 +420,6 @@ function executeMatchup() {
             let goalie = runState.selectedLineup.find(p => p.pos === 'G');
             if (goalie && getPlayerSalary(goalie) <= 100000 && runState.handIndex === stage.gamesCount - 1) {
                 earnings += activePerks.manager.data.bonus;
-            }
-        }
-
-        runState.teamFunds += earnings;
             }
         }
 
@@ -457,7 +442,7 @@ function executeMatchup() {
         runState.totalGamesPlayed++;
 
         if (runState.totalGamesPlayed >= 82) {
-            showNotification(`They said it couldn't be done.! Capital retained: $${runState.teamFunds.toLocaleString()}`, "success");
+            showNotification(`Dynasty validated! Capital retained: $${runState.teamFunds.toLocaleString()}`, "success");
             switchView('scr-menu');
             return;
         }
@@ -555,7 +540,6 @@ function createCardUiNode(player, showStorefrontPrice) {
     const div = document.createElement('div');
     div.className = `hockey-card`;
 
-    // Look up the colors based on the team name
     const tColor = TEAM_COLORS[player.team] || { bg: "#333", border: "#888" };
     div.style.backgroundColor = tColor.bg;
     div.style.border = `5px solid ${tColor.border}`;
@@ -724,7 +708,6 @@ function openStorefrontPhase() {
         return !runState.franchisePool.some(ownedCard => ownedCard.name === masterCard.name && ownedCard.season === masterCard.season);
     });
     
-    // Generates 6 storefront players
     let storefrontPlayers = nonOwnedPlayers.length > 0 ? shuffleArray([...nonOwnedPlayers]).slice(0, 6) : [];
 
     storefrontPlayers.forEach((player) => {
@@ -756,7 +739,6 @@ function openStorefrontPhase() {
         let catPerks = MASTER_PERKS_POOL.filter(p => p.category === cat);
         let activeInSlot = runState.activePerks[cat];
         
-        // Exclude perk if it's already at max level (Level 5 / index 4)
         let validCatPerks = catPerks.filter(p => {
             if (activeInSlot && activeInSlot.id === p.id && activeInSlot.level >= 4) return false;
             return true;
@@ -768,10 +750,9 @@ function openStorefrontPhase() {
         
         let targetLevel = 0;
         if (activeInSlot && activeInSlot.id === rolledBasePerk.id) {
-            targetLevel = Math.min(4, activeInSlot.level + 1); // Increase level if matching
+            targetLevel = Math.min(4, activeInSlot.level + 1); 
         }
         
-        // Failsafe error log if data.js is out of sync
         if (!rolledBasePerk || !rolledBasePerk.levels) {
             console.error("CRITICAL: Perk data is missing the 'levels' array. Make sure data.js is updated!", rolledBasePerk);
             return;
