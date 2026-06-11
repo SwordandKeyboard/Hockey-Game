@@ -227,6 +227,7 @@ function switchView(viewId) {
 
 // --- DRAFT SCREEN LOGIC ---
 function initiateRun() {
+    // 1. Reset all stats and pools for a fresh run
     runState.stageIndex = 0;
     runState.handIndex = 0;
     runState.totalGamesPlayed = 0;
@@ -236,11 +237,13 @@ function initiateRun() {
     runState.currentHand = [];
     runState.activePerks = { manager: null, coach: null, game_plan: null };
 
+    // 2. Reset the draft state
     draftState.budget = 2000000;
     draftState.round = 1;
     draftState.roundPicks = [];
     draftState.seenPlayers = new Set();
 
+    // 3. Jump to the draft screen and roll the first pack of players
     switchView('scr-initial-draft');
     generateDraftPool();
 }
@@ -335,21 +338,26 @@ function renderDraftScreen() {
 }
 
 function confirmDraftRound() {
+    // 1. Move the selected players to your franchise pool
     runState.franchisePool.push(...draftState.roundPicks);
-
-    draftState.round++;
     draftState.roundPicks = [];
 
-    if (draftState.round > 12) {
+    // 2. Strictly lock the exit to exactly Round 12
+    if (draftState.round === 12) {
         finishInitialDraft();
     } else {
+        // 3. If it's 11 or lower, advance the round and generate new players
+        draftState.round++;
         generateDraftPool();
     }
 }
+
 function finishInitialDraft() {
-    // Bypass deep cloning entirely. A simple shallow copy is crash-proof.
+    // Clean, crash-proof roster copy
     runState.runtimeDeck = [...runState.franchisePool];
     runState.teamFunds = draftState.budget;
+
+    // Start the game loop!
     beginStage();
 }
 
