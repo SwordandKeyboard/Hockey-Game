@@ -574,7 +574,7 @@ function createCardUiNode(player, showStorefrontPrice) {
         statsHtml = `
            <div class="stat-line">G: ${player.stats.G} | A: ${player.stats.A}</div>
            <div class="stat-line">+/-: ${player.stats.plusMinus >= 0 ? '+' + player.stats.plusMinus : player.stats.plusMinus}</div>
-           <div class="stat-line" style="font-weight:bold; color:#fcd34d; text-shadow:1px 1px 2px #000;">PTS: ${basePts}</div>`;
+           <div class="stat-line" style="font-weight:bold; color:#fcd34d; text-shadow:1px 1px 2px #000;">${basePts}: Output</div>`;
     }
 
     div.innerHTML = `
