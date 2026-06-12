@@ -204,18 +204,18 @@ function switchView(viewId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(viewId).classList.add('active');
 }
+
 // --- DRAFT SCREEN LOGIC ---
 function initiateRun() {
     runState.stageIndex = 0;
     runState.handIndex = 0;
     runState.totalGamesPlayed = 0;
-    runState.teamFunds = 2000000; // Starting funds given directly now
+    runState.teamFunds = 2000000; 
     runState.franchisePool = [];
     runState.discardPile = [];
     runState.currentHand = [];
     runState.activePerks = { manager: null, coach: null, game_plan: null };
 
-    // New 4-Round Pack Draft State
     draftState.round = 1;
     draftState.maxRounds = 4;
     draftState.currentPacks = [];
@@ -226,7 +226,6 @@ function initiateRun() {
 }
 
 function generateDraftPacks() {
-    // Generate 4 pack options using the external PackManager
     draftState.currentPacks = PackManager.generateDraftPackOptions(MASTER_REGULAR_POOL, 4);
     draftState.selectedPack = null;
     renderDraftScreen();
@@ -251,7 +250,6 @@ function renderDraftScreen() {
         card.style.justifyContent = "center";
         card.style.flexDirection = "column";
 
-        // Style the pack based on if it's a team theme or not
         if (packTheme.type === "TEAM") {
             const tColor = TEAM_COLORS[packTheme.value] || { bg: "#333", border: "#888", text: "#FFFFFF" };
             card.style.backgroundColor = tColor.bg;
@@ -280,13 +278,9 @@ function renderDraftScreen() {
 }
 
 function confirmDraftRound() {
-    // 1. Generate the cards for the selected pack
     let pulledCards = PackManager.openDraftPack(MASTER_REGULAR_POOL, draftState.selectedPack);
-    
-    // 2. Add them to the pool
     runState.franchisePool.push(...pulledCards);
 
-    // 3. Show them to the player
     openPackModal(pulledCards, () => {
         if (draftState.round === draftState.maxRounds) {
             finishInitialDraft();
@@ -310,24 +304,22 @@ function openPackModal(cards, onCloseCallback) {
         card.onclick = null;
         card.draggable = false;
         
-        // Static UI marker for high-value cards
         let salary = getPlayerSalary(player);
         if (salary >= PackManager.RARITY.MYTHIC) {
-            card.style.border = "6px solid #eab308"; // Distinct Gold
+            card.style.border = "6px solid #eab308"; 
         } else if (salary >= PackManager.RARITY.RARE) {
-            card.style.border = "6px solid #a855f7"; // Distinct Purple
+            card.style.border = "6px solid #a855f7"; 
         }
 
         grid.appendChild(card);
     });
 
-    // Temporarily overwrite the close button to handle the draft progression
     const closeBtn = document.getElementById('modal-close-btn');
     const originalOnclick = closeBtn.onclick;
     
     closeBtn.onclick = () => {
         closeDeckModal();
-        closeBtn.onclick = originalOnclick; // Restore standard behavior
+        closeBtn.onclick = originalOnclick; 
         if (onCloseCallback) onCloseCallback();
     };
 
@@ -339,7 +331,45 @@ function finishInitialDraft() {
     beginStage();
 }
 
-    // Calculate Waiver Cost (25% of salary)
+// --- GAMEPLAY LOOP ---
+function beginStage() {
+    runState.handIndex = 0;
+    beginHand();
+}
+
+function beginHand() {
+    runState.discardsLeft = 3;
+    runState.selectedLineup = [];
+    updateHudDisplay();
+
+    Object.keys(POS_REQUIREMENTS).forEach(pos => {
+        let currentCount = runState.currentHand.filter(p => p.pos === pos).length;
+        let needed = POS_REQUIREMENTS[pos] - currentCount;
+
+        if (needed > 0) {
+            let available = runState.runtimeDeck.filter(p => p.pos === pos && !runState.currentHand.includes(p));
+            if (available.length < needed) {
+                runState.runtimeDeck.push(...runState.discardPile);
+                runState.discardPile = [];
+                available = runState.runtimeDeck.filter(p => p.pos === pos && !runState.currentHand.includes(p));
+            }
+
+            let options = runState.runtimeDeck.filter(p => p.pos === pos && !runState.currentHand.includes(p));
+            let shuffled = shuffleArray([...options]);
+            for(let i = 0; i < needed; i++) {
+                if(shuffled[i]) runState.currentHand.push(shuffled[i]);
+            }
+        }
+    });
+
+    renderHandSelectionScreen();
+    switchView('scr-gameplay');
+}
+
+function executeMassDiscard() {
+    const sendDownCount = runState.selectedLineup.length;
+    if (sendDownCount === 0 || sendDownCount > runState.discardsLeft) return;
+
     let totalCost = 0;
     runState.selectedLineup.forEach(discardedCard => {
         totalCost += Math.floor(getPlayerSalary(discardedCard) * 0.25);
@@ -350,7 +380,6 @@ function finishInitialDraft() {
         return;
     }
 
-    // Deduct the cost
     runState.teamFunds -= totalCost;
 
     runState.selectedLineup.forEach(discardedCard => {
@@ -501,18 +530,15 @@ function renderSelectedLineupZone() {
 
     let willDropBelow18 = (runState.franchisePool.length - selectedCount) < 18;
     
-    // Calculate display cost
     let discardCost = 0;
     runState.selectedLineup.forEach(p => discardCost += Math.floor(getPlayerSalary(p) * 0.25));
 
-    // Update button text with cost
     if (selectedCount > 0) {
         DOM.discardBtn.innerText = `Waive Selected (-$${(discardCost/1000)}k) | ${runState.discardsLeft} Left`;
     } else {
         DOM.discardBtn.innerText = `Select to Waive (${runState.discardsLeft} Left)`;
     }
 
-    // Advanced Validation for disabling the button
     if (selectedCount === 0 || selectedCount > runState.discardsLeft || willDropBelow18 || runState.teamFunds < discardCost) {
         DOM.discardBtn.disabled = true;
         if (willDropBelow18 && selectedCount > 0) {
@@ -746,10 +772,8 @@ function openStorefrontPhase() {
                 if (runState.teamFunds >= 300000) {
                     runState.teamFunds -= 300000;
                     
-                    // Pull the cards using the Store Pack rules
                     let pulledCards = PackManager.openStorePack(MASTER_REGULAR_POOL);
                     
-                    // Add directly to the franchise and current run deck
                     runState.franchisePool.push(...pulledCards);
                     runState.runtimeDeck.push(...pulledCards);
                     
@@ -758,7 +782,6 @@ function openStorefrontPhase() {
                     pCard.onclick = null;
                     updateHudDisplay();
                     
-                    // Show the player what they pulled using the existing draft modal
                     openPackModal(pulledCards);
                 } else {
                     showNotification("Insufficient funds!", "error");
@@ -829,4 +852,4 @@ function openStorefrontPhase() {
     });
 }
 
-anceStageAfterStore() { runState.stageIndex++; beginStage(); }
+function advanceStageAfterStore() { runState.stageIndex++; beginStage(); }
