@@ -688,18 +688,18 @@ function openDeckModal(type) {
 }
 
 function closeDeckModal() { document.getElementById('deck-modal').style.display = 'none'; }
-
 function openStorefrontPhase() {
     switchView('scr-draft');
     updateHudDisplay();
 
+    // 1. GENERATE PLAYERS (4 Slots)
     const playerZone = document.getElementById('draft-pool-zone');
     playerZone.innerHTML = '';
     let nonOwnedPlayers = MASTER_REGULAR_POOL.filter(masterCard => {
         return !runState.franchisePool.some(ownedCard => ownedCard.name === masterCard.name && ownedCard.season === masterCard.season);
     });
     
-    let storefrontPlayers = nonOwnedPlayers.length > 0 ? shuffleArray([...nonOwnedPlayers]).slice(0, 6) : [];
+    let storefrontPlayers = nonOwnedPlayers.length > 0 ? shuffleArray([...nonOwnedPlayers]).slice(0, 4) : [];
 
     storefrontPlayers.forEach((player) => {
         const card = createCardUiNode(player, true);
@@ -721,6 +721,54 @@ function openStorefrontPhase() {
         playerZone.appendChild(card);
     });
 
+    // 2. GENERATE STORE PACKS (4 Slots at $300k)
+    const packsZone = document.getElementById('store-packs-zone');
+    if (packsZone) {
+        packsZone.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            const pCard = document.createElement('div');
+            pCard.className = "hockey-card pack-card";
+            pCard.style.cursor = "pointer";
+            pCard.style.display = "flex";
+            pCard.style.alignItems = "center";
+            pCard.style.justifyContent = "center";
+            pCard.style.flexDirection = "column";
+            pCard.style.backgroundColor = "#1e293b";
+            pCard.style.border = "5px solid #eab308"; // Gold border
+
+            pCard.innerHTML = `
+                <span class="price-tag" style="position:absolute; top:6px; right:6px; background:#22c55e; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:0.68rem; z-index:5;">$300k</span>
+                <h3 style="margin:0; text-shadow:1px 1px 3px #000; font-size:1.2rem; color:#fff; text-align:center;">Store Pack</h3>
+                <span style="font-size:0.7rem; opacity:0.8; font-weight:bold; text-transform:uppercase; margin-top:8px; color:#fff; text-align:center;">7 CARDS<br>(MYTHIC & RARE GUARANTEED)</span>
+            `;
+
+            pCard.onclick = () => {
+                if (runState.teamFunds >= 300000) {
+                    runState.teamFunds -= 300000;
+                    
+                    // Pull the cards using the Store Pack rules
+                    let pulledCards = PackManager.openStorePack(MASTER_REGULAR_POOL);
+                    
+                    // Add directly to the franchise and current run deck
+                    runState.franchisePool.push(...pulledCards);
+                    runState.runtimeDeck.push(...pulledCards);
+                    
+                    showNotification("Pack Opened!", "success");
+                    pCard.style.opacity = "0.3";
+                    pCard.onclick = null;
+                    updateHudDisplay();
+                    
+                    // Show the player what they pulled using the existing draft modal
+                    openPackModal(pulledCards);
+                } else {
+                    showNotification("Insufficient funds!", "error");
+                }
+            };
+            packsZone.appendChild(pCard);
+        }
+    }
+
+    // 3. GENERATE PERKS (Coaches & GMs)
     const perksZone = document.getElementById('perks-pool-zone');
     perksZone.innerHTML = '';
 
@@ -744,10 +792,7 @@ function openStorefrontPhase() {
             targetLevel = Math.min(4, activeInSlot.level + 1); 
         }
         
-        if (!rolledBasePerk || !rolledBasePerk.levels) {
-            console.error("CRITICAL: Perk data is missing the 'levels' array. Make sure data.js is updated!", rolledBasePerk);
-            return;
-        }
+        if (!rolledBasePerk || !rolledBasePerk.levels) return;
 
         let lvlData = rolledBasePerk.levels[targetLevel];
         let displayLvl = targetLevel + 1;
@@ -784,4 +829,4 @@ function openStorefrontPhase() {
     });
 }
 
-function advanceStageAfterStore() { runState.stageIndex++; beginStage(); }
+anceStageAfterStore() { runState.stageIndex++; beginStage(); }
