@@ -500,10 +500,10 @@ function renderHandSelectionScreen() {
         card.style.setProperty('--y', `${Math.pow(offset, 2) * 2}px`);
         card.style.zIndex = index + 1;
         DOM.handZone.appendChild(card);
-    });
+    }); // <--- Closes the forEach loop
 
-    renderSelectedLineupZone();
-}
+    renderSelectedLineupZone(); // <--- This was missing!
+} // <--- Closes the main function
 
 function renderSelectedLineupZone() {
     DOM.selectedZone.innerHTML = '';
