@@ -568,7 +568,7 @@ function createCardUiNode(player, showStorefrontPrice) {
     if (player.pos === "G") {
         statsHtml = `
            <div class="stat-line">SV%: ${player.stats.SV.toFixed(3).replace('0.', '.')} | GAA: ${player.stats.GAA.toFixed(2)}</div>
-           <div class="stat-line" style="font-weight:bold; color:#38bdf8; text-shadow:1px 1px 2px #000; text-align:center;">Defense Anchor</div>`;
+           <div class="stat-line" style="font-weight:bold; color:#38bdf8; text-shadow:1px 1px 2px #000; text-align:center;">   </div>`;
     } else {
         let basePts = (player.stats.G * 2) + player.stats.A;
         statsHtml = `
