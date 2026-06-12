@@ -80,11 +80,11 @@ const MASTER_PERKS_POOL = [
     {
         id: "gp_trap", name: "The Trap", category: "game_plan",
         levels: [
-            { cost: 90000, desc: "Goalie Target Reduction +3%. Centers generate 10% fewer Pts.", gMult: 0.03, cMult: 0.90 },
-            { cost: 130000, desc: "Goalie Target Reduction +5%. Centers generate 15% fewer Pts.", gMult: 0.05, cMult: 0.85 },
+            { cost: 90000, desc: "Goalie Target Reduction +3%. Centers generate 30% fewer Pts.", gMult: 0.03, cMult: 0.70 },
+            { cost: 130000, desc: "Goalie Target Reduction +5%. Centers generate 25% fewer Pts.", gMult: 0.05, cMult: 0.75 },
             { cost: 180000, desc: "Goalie Target Reduction +8%. Centers generate 20% fewer Pts.", gMult: 0.08, cMult: 0.80 },
-            { cost: 240000, desc: "Goalie Target Reduction +12%. Centers generate 25% fewer Pts.", gMult: 0.12, cMult: 0.75 },
-            { cost: 320000, desc: "Goalie Target Reduction +18%. Centers generate 30% fewer Pts.", gMult: 0.18, cMult: 0.70 }
+            { cost: 240000, desc: "Goalie Target Reduction +12%. Centers generate 15% fewer Pts.", gMult: 0.12, cMult: 0.85 },
+            { cost: 320000, desc: "Goalie Target Reduction +18%. Centers generate 10% fewer Pts.", gMult: 0.18, cMult: 0.90 }
         ]
     },
     {
