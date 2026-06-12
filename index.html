@@ -410,7 +410,7 @@ box-shadow: -8px 0 15px -5px rgba(0,0,0,0.4);
 <div class="modal-content">
 <div class="modal-header">
 <h2 id="modal-title" style="margin:0; color: var(--text-main);">The Roster</h2>
-<button class="action-btn" style="margin:0; padding: 8px 16px; font-size: 0.9rem; width:auto;" onclick="closeDeckModal()">Close</button>
+<button id="modal-close-btn" class="action-btn" style="margin:0; padding: 8px 16px; font-size: 0.9rem; width:auto;" onclick="closeDeckModal()">Close</button>
 </div>
 <div id="modal-card-grid" class="card-container" style="flex-wrap: wrap; justify-content: flex-start;"></div>
 </div>
@@ -434,12 +434,11 @@ Initialize a deep 24-card roster starting with $2M funds. Manage a rigorous 82-g
 
 <div id="scr-initial-draft" class="screen">
 <h2 style="text-align:center; color:var(--text-main); margin-top: 0;">Inaugural Franchise Draft</h2>
-<p style="text-align:center; color:var(--text-muted); margin-top:-10px; font-size: 0.9rem;">Round <span id="draft-round-display">1</span> of 12. Drafting: <strong id="draft-pos-display">LW</strong>. Select exactly 2 players.</p>
+<p style="text-align:center; color:var(--text-muted); margin-top:-10px; font-size: 0.9rem;">Round <span id="draft-round-display">1</span> of 4. Select your franchise core.</p>
 
 <div class="draft-header">
-<div>Cap Space: <span id="draft-budget-display" style="color:var(--cash-green); font-size:1.2rem;">$0</span></div>
-<div>Selected: <span id="draft-count-display">0</span> / 2</div>
-<button class="action-btn" id="finish-draft-btn" style="width:auto; padding: 8px 20px;" disabled onclick="confirmDraftRound()">Confirm Picks</button>
+<div style="font-size:1.2rem;">Available Packs</div>
+<button class="action-btn" id="finish-draft-btn" style="width:auto; padding: 8px 20px;" disabled onclick="confirmDraftRound()">Confirm Pack</button>
 </div>
 
 <div id="draft-card-pool" class="card-container"></div>
@@ -492,7 +491,8 @@ Initialize a deep 24-card roster starting with $2M funds. Manage a rigorous 82-g
 <h2 style="text-align:center; color:var(--cash-green)">Intermission Free Agency</h2>
 <p style="text-align:center; color:var(--text-muted); margin-top:-5px;">Sign new talent or retool your coaching staff before starting the next series.</p>
 
-<h3 style="color:var(--rink-blue); text-align:center; margin-bottom:5px;">Available Free Agents (6 Slots)</h3><div id="draft-pool-zone" class="card-container"></div>
+<h3 style="color:var(--rink-blue); text-align:center; margin-bottom:5px;">Available Free Agents (6 Slots)</h3>
+<div id="draft-pool-zone" class="card-container"></div>
 
 <h3 style="color:var(--perk-purple); text-align:center; margin-top:20px; margin-bottom:5px;">Coaching Staff & Systems Upgrades</h3>
 <div id="perks-pool-zone" class="card-container"></div>
@@ -502,7 +502,7 @@ Initialize a deep 24-card roster starting with $2M funds. Manage a rigorous 82-g
 </div>
 
 <script src="data.js"></script>
- <script src="packs.js"></script>
+<script src="packs.js"></script>
 <script src="engine.js"></script>
 <script src="roster_data.js"></script>
 
