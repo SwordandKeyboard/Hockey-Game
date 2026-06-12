@@ -492,3 +492,365 @@ function renderHandSelectionScreen() {
     unselectedHand.forEach((player, index) => {
         const card = createCardUiNode(player, false);
         card.onclick = () => selectCardToLineup(player);
+        card.draggable = true;
+        card.ondragstart = (e) => handleDragStart(e, player.name, player.season);
+
+        let offset = index - middle;
+        card.style.setProperty('--rot', `${offset * 3}deg`);
+        card.style.setProperty('--y', `${Math.pow(offset, 2) * 2}px`);
+        card.style.zIndex = index + 1;
+        DOM.handZone.appendChild(card);
+    });
+
+    renderSelectedLineupZone();
+}
+
+function renderSelectedLineupZone() {
+    DOM.selectedZone.innerHTML = '';
+    let placedCards = new Set();
+
+    VISUAL_LAYOUT.forEach(pos => {
+        const playerInSlot = runState.selectedLineup.find(p => p.pos === pos && !placedCards.has(p));
+        if (playerInSlot) {
+            placedCards.add(playerInSlot);
+            const card = createCardUiNode(playerInSlot, false);
+            card.classList.add('selected');
+            card.onclick = () => removeCardFromLineup(playerInSlot);
+            DOM.selectedZone.appendChild(card);
+        } else {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'position-slot';
+            placeholder.innerText = pos;
+            DOM.selectedZone.appendChild(placeholder);
+        }
+    });
+
+    const selectedCount = runState.selectedLineup.length;
+    DOM.submitBtn.disabled = !validateLineupStructure();
+
+    let willDropBelow18 = (runState.franchisePool.length - selectedCount) < 18;
+    
+    let discardCost = 0;
+    runState.selectedLineup.forEach(p => discardCost += Math.floor(getPlayerSalary(p) * 0.25));
+
+    if (selectedCount > 0) {
+        DOM.discardBtn.innerText = `Waive Selected (-$${(discardCost/1000)}k) | ${runState.discardsLeft} Left`;
+    } else {
+        DOM.discardBtn.innerText = `Select to Waive (${runState.discardsLeft} Left)`;
+    }
+
+    if (selectedCount === 0 || selectedCount > runState.discardsLeft || willDropBelow18 || runState.teamFunds < discardCost) {
+        DOM.discardBtn.disabled = true;
+        if (willDropBelow18 && selectedCount > 0) {
+            DOM.discardBtn.innerText = "Roster Min Reached (18)";
+        } else if (runState.teamFunds < discardCost && selectedCount > 0) {
+            DOM.discardBtn.innerText = "Insufficient Funds";
+        }
+    } else {
+        DOM.discardBtn.disabled = false;
+    }
+
+    updateProjectedScore();
+}
+
+function createCardUiNode(player, showStorefrontPrice) {
+    const div = document.createElement('div');
+    div.className = `hockey-card`;
+
+    const tColor = TEAM_COLORS[player.team] || { bg: "#333", border: "#888" };
+    div.style.backgroundColor = tColor.bg;
+    div.style.border = `5px solid ${tColor.border}`;
+
+    const salary = getPlayerSalary(player);
+    let actionBadge = showStorefrontPrice ? `<span class="price-tag">$${(salary/1000)}k</span>` : '';
+
+    let statsHtml = '';
+    if (player.pos === "G") {
+        statsHtml = `
+           <div class="stat-line">SV%: ${player.stats.SV.toFixed(3).replace('0.', '.')} | GAA: ${player.stats.GAA.toFixed(2)}</div>
+           <div class="stat-line" style="font-weight:bold; color:#38bdf8; text-shadow:1px 1px 2px #000; text-align:center;">Defense Anchor</div>`;
+    } else {
+        let basePts = (player.stats.G * 2) + player.stats.A;
+        statsHtml = `
+           <div class="stat-line">G: ${player.stats.G} | A: ${player.stats.A}</div>
+           <div class="stat-line">+/-: ${player.stats.plusMinus >= 0 ? '+' + player.stats.plusMinus : player.stats.plusMinus}</div>
+           <div class="stat-line" style="font-weight:bold; color:#fcd34d; text-shadow:1px 1px 2px #000;">Base Output: ${basePts}</div>`;
+    }
+
+    div.innerHTML = `
+        <span class="pos-tag">${player.pos}</span>
+        ${actionBadge}
+        <div class="team-tag">${player.team}</div>
+        <div class="player-name">${player.name}</div>
+        <div class="season-tag">${player.season}</div>
+        <div class="stat-container">${statsHtml}</div>
+    `;
+    return div;
+}
+
+function selectCardToLineup(player) {
+    if (runState.selectedLineup.length >= 6) return;
+    let currentOfPos = runState.selectedLineup.filter(p => p.pos === player.pos).length;
+    let maxAllowed = (player.pos === "D") ? 2 : 1;
+
+    if (currentOfPos >= maxAllowed) {
+        showNotification(`Position slot(s) for ${player.pos} are filled! Click the active card to swap.`, "error");
+        return;
+    }
+    runState.selectedLineup.push(player);
+    renderHandSelectionScreen();
+}
+
+function removeCardFromLineup(player) {
+    runState.selectedLineup = runState.selectedLineup.filter(p => p !== player);
+    renderHandSelectionScreen();
+}
+
+function validateLineupStructure() {
+    if (runState.selectedLineup.length !== 6) return false;
+    let counts = { "LW": 0, "C": 0, "RW": 0, "D": 0, "G": 0 };
+    runState.selectedLineup.forEach(p => counts[p.pos] = (counts[p.pos] || 0) + 1);
+    return counts["LW"] === 1 && counts["C"] === 1 && counts["RW"] === 1 && counts["D"] === 2 && counts["G"] === 1;
+}
+
+function renderActiveStaff() {
+    DOM.staffZone.innerHTML = '';
+    const roles = [
+        { key: 'manager', label: 'GM' },
+        { key: 'coach', label: 'Coach' },
+        { key: 'game_plan', label: 'System' }
+    ];
+
+    roles.forEach(role => {
+        const perk = runState.activePerks[role.key];
+        if (perk && perk.data) {
+            const pCard = document.createElement('div');
+            pCard.className = "hockey-card perk-card";
+            pCard.style.cursor = "default";
+            pCard.innerHTML = `
+                <span class="pos-tag" style="background:#7c3aed;">${role.label.toUpperCase()} LVL ${perk.level + 1}</span>
+                <div class="player-name">${perk.name}</div>
+                <div class="stat-container">
+                    <div class="stat-line" style="background:rgba(0,0,0,0.5); font-size:0.7rem; color: #fff; white-space: normal; padding: 6px;">${perk.data.desc}</div>
+                </div>
+            `;
+            DOM.staffZone.appendChild(pCard);
+        } else {
+            const emptySlot = document.createElement('div');
+            emptySlot.className = "staff-slot";
+            emptySlot.innerHTML = `<span style="font-size:0.8rem; text-transform:uppercase;">${role.label} Slot</span><br><span style="font-size:1.5rem; margin-top:5px;">+</span>`;
+            DOM.staffZone.appendChild(emptySlot);
+        }
+    });
+}
+
+function updateHudDisplay() {
+    const stage = HISTORICAL_STAGES[runState.stageIndex];
+    document.getElementById('hud-opp-name').innerText = stage ? stage.name : "Season Clear";
+    DOM.baseTarget.innerText = stage ? stage.target : 0;
+    document.getElementById('hud-funds').innerText = `$${runState.teamFunds.toLocaleString()}`;
+
+    document.getElementById('hud-hand-index').innerText = stage ? (runState.handIndex + 1) : 0;
+    document.getElementById('hud-hand-total').innerText = stage ? stage.gamesCount : 0;
+    document.getElementById('hud-games-played').innerText = runState.totalGamesPlayed;
+
+    renderActiveStaff();
+    updateProjectedScore();
+    updatePilesDisplay();
+}
+
+function updateProjectedScore() {
+    let matchupStats = calculateMatchupStats(runState.selectedLineup);
+    DOM.scoreCalc.innerText = matchupStats.score;
+    DOM.targetScore.innerText = matchupStats.target;
+
+    if (matchupStats.score >= matchupStats.target && matchupStats.target > 0) {
+        DOM.scoreCalc.style.color = "var(--cash-green)";
+    } else {
+        DOM.scoreCalc.style.color = "var(--rink-blue)";
+    }
+}
+
+function updatePilesDisplay() {
+    document.getElementById('draw-count').innerText = `The Roster (${runState.runtimeDeck.length})`;
+    document.getElementById('discard-count').innerText = `Discard (${runState.discardPile.length})`;
+
+    const discardVisual = document.getElementById('discard-pile-visual');
+    discardVisual.innerHTML = '';
+
+    if (runState.discardPile.length > 0) {
+        const topCardData = runState.discardPile[runState.discardPile.length - 1];
+        const miniCard = createCardUiNode(topCardData, false);
+        miniCard.onclick = null;
+        miniCard.draggable = false;
+        discardVisual.appendChild(miniCard);
+    }
+}
+
+function openDeckModal(type) {
+    const modal = document.getElementById('deck-modal');
+    const title = document.getElementById('modal-title');
+    const grid = document.getElementById('modal-card-grid');
+
+    grid.innerHTML = '';
+    let cardsToShow = [];
+
+    if (type === 'draw') {
+        title.innerText = `The Roster (${runState.runtimeDeck.length})`;
+        cardsToShow = runState.runtimeDeck;
+    } else if (type === 'discard') {
+        title.innerText = `Discard Pile (${runState.discardPile.length})`;
+        cardsToShow = runState.discardPile;
+    }
+
+    cardsToShow.forEach(player => {
+        const card = createCardUiNode(player, false);
+        card.onclick = null;
+        card.draggable = false;
+        grid.appendChild(card);
+    });
+
+    modal.style.display = 'flex';
+}
+
+function closeDeckModal() { document.getElementById('deck-modal').style.display = 'none'; }
+
+function openStorefrontPhase() {
+    switchView('scr-draft');
+    updateHudDisplay();
+
+    // 1. GENERATE PLAYERS (4 Slots)
+    const playerZone = document.getElementById('draft-pool-zone');
+    playerZone.innerHTML = '';
+    let nonOwnedPlayers = MASTER_REGULAR_POOL.filter(masterCard => {
+        return !runState.franchisePool.some(ownedCard => ownedCard.name === masterCard.name && ownedCard.season === masterCard.season);
+    });
+    
+    let storefrontPlayers = nonOwnedPlayers.length > 0 ? shuffleArray([...nonOwnedPlayers]).slice(0, 4) : [];
+
+    storefrontPlayers.forEach((player) => {
+        const card = createCardUiNode(player, true);
+       card.onclick = () => {
+            const salaryCost = getPlayerSalary(player);
+            if (runState.teamFunds >= salaryCost) {
+                runState.teamFunds -= salaryCost;
+                runState.franchisePool.push(player);
+                runState.runtimeDeck.push(player);
+                
+                showNotification(`Signed ${player.name}!`, "success");
+                card.style.opacity = "0.3";
+                card.onclick = null;
+                updateHudDisplay();
+            } else {
+                showNotification("Insufficient funds!", "error");
+            }
+        };
+        playerZone.appendChild(card);
+    });
+
+    // 2. GENERATE STORE PACKS (4 Slots at $300k)
+    const packsZone = document.getElementById('store-packs-zone');
+    if (packsZone) {
+        packsZone.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            const pCard = document.createElement('div');
+            pCard.className = "hockey-card pack-card";
+            pCard.style.cursor = "pointer";
+            pCard.style.display = "flex";
+            pCard.style.alignItems = "center";
+            pCard.style.justifyContent = "center";
+            pCard.style.flexDirection = "column";
+            pCard.style.backgroundColor = "#1e293b";
+            pCard.style.border = "5px solid #eab308"; // Gold border
+
+            pCard.innerHTML = `
+                <span class="price-tag" style="position:absolute; top:6px; right:6px; background:#22c55e; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:0.68rem; z-index:5;">$300k</span>
+                <h3 style="margin:0; text-shadow:1px 1px 3px #000; font-size:1.2rem; color:#fff; text-align:center;">Store Pack</h3>
+                <span style="font-size:0.7rem; opacity:0.8; font-weight:bold; text-transform:uppercase; margin-top:8px; color:#fff; text-align:center;">7 CARDS<br>(MYTHIC & RARE GUARANTEED)</span>
+            `;
+
+            pCard.onclick = () => {
+                if (runState.teamFunds >= 300000) {
+                    runState.teamFunds -= 300000;
+                    
+                    let pulledCards = PackManager.openStorePack(MASTER_REGULAR_POOL);
+                    
+                    runState.franchisePool.push(...pulledCards);
+                    runState.runtimeDeck.push(...pulledCards);
+                    
+                    showNotification("Pack Opened!", "success");
+                    pCard.style.opacity = "0.3";
+                    pCard.onclick = null;
+                    updateHudDisplay();
+                    
+                    openPackModal(pulledCards);
+                } else {
+                    showNotification("Insufficient funds!", "error");
+                }
+            };
+            packsZone.appendChild(pCard);
+        }
+    }
+
+    // 3. GENERATE PERKS (Coaches & GMs)
+    const perksZone = document.getElementById('perks-pool-zone');
+    perksZone.innerHTML = '';
+
+    const categories = ['manager', 'coach', 'game_plan'];
+    
+    categories.forEach(cat => {
+        let catPerks = MASTER_PERKS_POOL.filter(p => p.category === cat);
+        let activeInSlot = runState.activePerks[cat];
+        
+        let validCatPerks = catPerks.filter(p => {
+            if (activeInSlot && activeInSlot.id === p.id && activeInSlot.level >= 4) return false;
+            return true;
+        });
+        
+        if (validCatPerks.length === 0) validCatPerks = catPerks;
+
+        let rolledBasePerk = validCatPerks[Math.floor(Math.random() * validCatPerks.length)];
+        
+        let targetLevel = 0;
+        if (activeInSlot && activeInSlot.id === rolledBasePerk.id) {
+            targetLevel = Math.min(4, activeInSlot.level + 1); 
+        }
+        
+        if (!rolledBasePerk || !rolledBasePerk.levels) return;
+
+        let lvlData = rolledBasePerk.levels[targetLevel];
+        let displayLvl = targetLevel + 1;
+
+        const pCard = document.createElement('div');
+        pCard.className = "hockey-card perk-card";
+        pCard.innerHTML = `
+            <span class="pos-tag" style="background:#7c3aed;">${rolledBasePerk.category.toUpperCase().replace("_", " ")} LVL ${displayLvl}</span>
+            <span class="price-tag">$${(lvlData.cost/1000)}k</span>
+            <div class="player-name">${rolledBasePerk.name}</div>
+            <div class="stat-container">
+                <div class="stat-line" style="background:rgba(0,0,0,0.5); font-size:0.7rem; color: #fff; white-space: normal;">${lvlData.desc}</div>
+            </div>
+        `;
+        
+        pCard.onclick = () => {
+            if (runState.teamFunds >= lvlData.cost) {
+                runState.teamFunds -= lvlData.cost;
+                runState.activePerks[rolledBasePerk.category] = { 
+                    id: rolledBasePerk.id, 
+                    level: targetLevel, 
+                    data: lvlData, 
+                    name: rolledBasePerk.name 
+                };
+                showNotification(`${rolledBasePerk.name} Lvl ${displayLvl} active!`, "success");
+                pCard.style.opacity = "0.3";
+                pCard.onclick = null;
+                updateHudDisplay();
+            } else {
+                showNotification("Insufficient funds!", "error");
+            }
+        };
+        perksZone.appendChild(pCard);
+    });
+}
+
+function advanceStageAfterStore() { runState.stageIndex++; beginStage(); }
