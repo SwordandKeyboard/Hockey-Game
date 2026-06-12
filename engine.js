@@ -204,170 +204,140 @@ function switchView(viewId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(viewId).classList.add('active');
 }
-
 // --- DRAFT SCREEN LOGIC ---
 function initiateRun() {
     runState.stageIndex = 0;
     runState.handIndex = 0;
     runState.totalGamesPlayed = 0;
-    runState.teamFunds = 0;
+    runState.teamFunds = 2000000; // Starting funds given directly now
     runState.franchisePool = [];
     runState.discardPile = [];
     runState.currentHand = [];
     runState.activePerks = { manager: null, coach: null, game_plan: null };
 
-    draftState.budget = 2000000;
+    // New 4-Round Pack Draft State
     draftState.round = 1;
-    draftState.roundPicks = [];
-    draftState.seenPlayers = new Set();
+    draftState.maxRounds = 4;
+    draftState.currentPacks = [];
+    draftState.selectedPack = null;
 
     switchView('scr-initial-draft');
-    generateDraftPool();
+    generateDraftPacks();
 }
 
-function generateDraftPool() {
-    let targetPos = draftState.schedule[draftState.round - 1];
-
-    let available = MASTER_REGULAR_POOL.filter(p =>
-        p.pos === targetPos && !draftState.seenPlayers.has(p.name + p.season)
-    );
-
-    let minSalary = targetPos === "G" ? 75000 : 50000;
-
-    let cheapPlayers = available.filter(p => getPlayerSalary(p) <= minSalary);
-    let otherPlayers = available.filter(p => getPlayerSalary(p) > minSalary);
-
-    cheapPlayers = shuffleArray([...cheapPlayers]);
-    otherPlayers = shuffleArray([...otherPlayers]);
-
-    let guaranteed = cheapPlayers.slice(0, 2);
-
-    let remainingPool = [...cheapPlayers.slice(2), ...otherPlayers];
-    remainingPool = shuffleArray(remainingPool);
-
-    let finalPack = [...guaranteed, ...remainingPool.slice(0, 10)];
-    draftState.currentPool = shuffleArray(finalPack);
-
-    draftState.currentPool.forEach(p => draftState.seenPlayers.add(p.name + p.season));
-
+function generateDraftPacks() {
+    // Generate 4 pack options using the external PackManager
+    draftState.currentPacks = PackManager.generateDraftPackOptions(MASTER_REGULAR_POOL, 4);
+    draftState.selectedPack = null;
     renderDraftScreen();
 }
 
 function renderDraftScreen() {
-    let targetPos = draftState.schedule[draftState.round - 1];
     document.getElementById('draft-round-display').innerText = draftState.round;
-    document.getElementById('draft-pos-display').innerText = targetPos;
-    document.getElementById('draft-budget-display').innerText = `$${draftState.budget.toLocaleString()}`;
-    document.getElementById('draft-count-display').innerText = draftState.roundPicks.length;
-
-    document.getElementById('finish-draft-btn').disabled = draftState.roundPicks.length !== 2;
-    document.getElementById('finish-draft-btn').innerText = draftState.round === 12 ? "Finalize & Start Season" : "Confirm Picks";
+    
+    const finishBtn = document.getElementById('finish-draft-btn');
+    finishBtn.disabled = draftState.selectedPack === null;
+    finishBtn.innerText = draftState.round === draftState.maxRounds ? "Finalize Core & Open" : "Confirm Pack Selection";
 
     const poolContainer = document.getElementById('draft-card-pool');
     poolContainer.innerHTML = '';
 
-    let requiredReserve = 0;
-    let otherPicksThisRound = 2 - draftState.roundPicks.length;
-    let currentPos = draftState.schedule[draftState.round - 1];
+    draftState.currentPacks.forEach(packTheme => {
+        const card = document.createElement('div');
+        card.className = "hockey-card pack-card";
+        card.style.cursor = "pointer";
+        card.style.display = "flex";
+        card.style.alignItems = "center";
+        card.style.justifyContent = "center";
+        card.style.flexDirection = "column";
 
-    if (otherPicksThisRound > 0) {
-        requiredReserve += (currentPos === "G" ? 75000 : 50000) * otherPicksThisRound;
-    }
-
-    for (let r = draftState.round; r < 12; r++) {
-        let pos = draftState.schedule[r];
-        requiredReserve += (pos === "G" ? 75000 : 50000) * 2;
-    }
-
-    let maxAffordableSalary = draftState.budget - requiredReserve;
-
-    draftState.currentPool.forEach(player => {
-        let isSelected = draftState.roundPicks.some(p => p.name === player.name && p.season === player.season);
-        let card = createCardUiNode(player, true);
-        let salary = getPlayerSalary(player);
-
-        if (isSelected) {
-            card.style.transform = "translateY(-4px)";
-            card.style.boxShadow = "0 0 0 4px var(--rink-blue)";
-
-            card.onclick = () => {
-                draftState.budget += salary;
-                draftState.roundPicks = draftState.roundPicks.filter(p => !(p.name === player.name && p.season === player.season));
-                renderDraftScreen();
-            };
+        // Style the pack based on if it's a team theme or not
+        if (packTheme.type === "TEAM") {
+            const tColor = TEAM_COLORS[packTheme.value] || { bg: "#333", border: "#888", text: "#FFFFFF" };
+            card.style.backgroundColor = tColor.bg;
+            card.style.border = `5px solid ${tColor.border}`;
+            card.style.color = tColor.text;
         } else {
-            if (salary > maxAffordableSalary || draftState.roundPicks.length >= 2) {
-                card.style.opacity = "0.4";
-                card.style.cursor = "not-allowed";
-            } else {
-                card.onclick = () => {
-                    draftState.budget -= salary;
-                    draftState.roundPicks.push(player);
-                    renderDraftScreen();
-                };
-            }
+            card.style.backgroundColor = "#1e293b";
+            card.style.border = "5px solid #cbd5e1";
+            card.style.color = "#FFFFFF";
         }
+
+        card.innerHTML = `<h3 style="margin:0; text-shadow:1px 1px 3px #000; font-size:1.4rem;">${packTheme.value}</h3><span style="font-size:0.75rem; opacity:0.8; font-weight:bold; text-transform:uppercase; margin-top:5px;">${packTheme.type} THEME</span>`;
+
+        if (draftState.selectedPack === packTheme) {
+            card.style.transform = "translateY(-4px)";
+            card.style.boxShadow = "0 0 0 5px var(--rink-blue)";
+        }
+
+        card.onclick = () => {
+            draftState.selectedPack = packTheme;
+            renderDraftScreen();
+        };
 
         poolContainer.appendChild(card);
     });
 }
 
 function confirmDraftRound() {
-    runState.franchisePool.push(...draftState.roundPicks);
-    draftState.roundPicks = [];
+    // 1. Generate the cards for the selected pack
+    let pulledCards = PackManager.openDraftPack(MASTER_REGULAR_POOL, draftState.selectedPack);
+    
+    // 2. Add them to the pool
+    runState.franchisePool.push(...pulledCards);
 
-    if (draftState.round === 12) {
-        finishInitialDraft();
-    } else {
-        draftState.round++;
-        generateDraftPool();
-    }
+    // 3. Show them to the player
+    openPackModal(pulledCards, () => {
+        if (draftState.round === draftState.maxRounds) {
+            finishInitialDraft();
+        } else {
+            draftState.round++;
+            generateDraftPacks();
+        }
+    });
+}
+
+function openPackModal(cards, onCloseCallback) {
+    const modal = document.getElementById('deck-modal');
+    const title = document.getElementById('modal-title');
+    const grid = document.getElementById('modal-card-grid');
+
+    title.innerText = `Pack Opened! (${cards.length} Cards)`;
+    grid.innerHTML = '';
+
+    cards.forEach(player => {
+        const card = createCardUiNode(player, false);
+        card.onclick = null;
+        card.draggable = false;
+        
+        // Static UI marker for high-value cards
+        let salary = getPlayerSalary(player);
+        if (salary >= PackManager.RARITY.MYTHIC) {
+            card.style.border = "6px solid #eab308"; // Distinct Gold
+        } else if (salary >= PackManager.RARITY.RARE) {
+            card.style.border = "6px solid #a855f7"; // Distinct Purple
+        }
+
+        grid.appendChild(card);
+    });
+
+    // Temporarily overwrite the close button to handle the draft progression
+    const closeBtn = document.getElementById('modal-close-btn');
+    const originalOnclick = closeBtn.onclick;
+    
+    closeBtn.onclick = () => {
+        closeDeckModal();
+        closeBtn.onclick = originalOnclick; // Restore standard behavior
+        if (onCloseCallback) onCloseCallback();
+    };
+
+    modal.style.display = 'flex';
 }
 
 function finishInitialDraft() {
     runState.runtimeDeck = [...runState.franchisePool];
-    runState.teamFunds = draftState.budget;
     beginStage();
 }
-
-// --- GAMEPLAY LOOP ---
-function beginStage() {
-    runState.handIndex = 0;
-    beginHand();
-}
-
-function beginHand() {
-    runState.discardsLeft = 3;
-    runState.selectedLineup = [];
-    updateHudDisplay();
-
-    Object.keys(POS_REQUIREMENTS).forEach(pos => {
-        let currentCount = runState.currentHand.filter(p => p.pos === pos).length;
-        let needed = POS_REQUIREMENTS[pos] - currentCount;
-
-        if (needed > 0) {
-            let available = runState.runtimeDeck.filter(p => p.pos === pos && !runState.currentHand.includes(p));
-            if (available.length < needed) {
-                runState.runtimeDeck.push(...runState.discardPile);
-                runState.discardPile = [];
-                available = runState.runtimeDeck.filter(p => p.pos === pos && !runState.currentHand.includes(p));
-            }
-
-            let options = runState.runtimeDeck.filter(p => p.pos === pos && !runState.currentHand.includes(p));
-            let shuffled = shuffleArray([...options]);
-            for(let i = 0; i < needed; i++) {
-                if(shuffled[i]) runState.currentHand.push(shuffled[i]);
-            }
-        }
-    });
-
-    renderHandSelectionScreen();
-    switchView('scr-gameplay');
-}
-
-function executeMassDiscard() {
-    const sendDownCount = runState.selectedLineup.length;
-    if (sendDownCount === 0 || sendDownCount > runState.discardsLeft) return;
 
     // Calculate Waiver Cost (25% of salary)
     let totalCost = 0;
