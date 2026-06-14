@@ -335,7 +335,7 @@ function finishInitialDraft() {
 // --- GAMEPLAY LOOP ---
 function beginStage() {
     runState.handIndex = 0;
-    beginStage();
+    beginHand(); // <-- THIS WAS THE BUG: Fixed back to beginHand()
 }
 
 function beginHand() {
@@ -484,15 +484,6 @@ function handleDrop(event) {
     } catch(e) { console.error("Drop failed: ", e); }
 }
 
-function handleDrop(event) {
-    event.preventDefault(); document.getElementById('rink-drop-zone').classList.remove('drag-over');
-    try {
-        const data = JSON.parse(event.dataTransfer.getData('text/plain'));
-        const player = runState.currentHand.find(p => p.name === data.name && p.season === data.season);
-        if (player) selectCardToLineup(player);
-    } catch(e) { console.error("Drop failed: ", e); }
-}
-
 function renderHandSelectionScreen() {
     DOM.handZone.innerHTML = '';
     let unselectedHand = runState.currentHand.filter(p => !runState.selectedLineup.includes(p));
@@ -626,7 +617,6 @@ function selectCardToLineup(player) {
     renderHandSelectionScreen();
 }
 
-// --- REST OF THE LOGIC FROM ORIGINAL BRANCH REMAINING STABLE ---
 function removeCardFromLineup(player) {
     runState.selectedLineup = runState.selectedLineup.filter(p => p !== player);
     renderHandSelectionScreen();
@@ -697,7 +687,6 @@ function updateProjectedScore() {
     }
 }
 
-// --- REMAINDER RE-MAPPED TO MATCH ORIGINAL ---
 function updatePilesDisplay() {
     document.getElementById('draw-count').innerText = `The Roster (${runState.runtimeDeck.length})`;
     document.getElementById('discard-count').innerText = `Discard (${runState.discardPile.length})`;
@@ -746,6 +735,7 @@ function openStorefrontPhase() {
     switchView('scr-draft');
     updateHudDisplay();
 
+    // 1. GENERATE PLAYERS (4 Slots)
     const playerZone = document.getElementById('draft-pool-zone');
     playerZone.innerHTML = '';
     let nonOwnedPlayers = MASTER_REGULAR_POOL.filter(masterCard => {
@@ -774,6 +764,7 @@ function openStorefrontPhase() {
         playerZone.appendChild(card);
     });
 
+    // 2. GENERATE STORE PACKS (4 Slots at $300k)
     const packsZone = document.getElementById('store-packs-zone');
     if (packsZone) {
         packsZone.innerHTML = '';
@@ -786,10 +777,10 @@ function openStorefrontPhase() {
             pCard.style.justifyContent = "center";
             pCard.style.flexDirection = "column";
             pCard.style.backgroundColor = "#1e293b";
-            pCard.style.border = "5px solid #eab308"; 
+            pCard.style.border = "5px solid #eab308"; // Gold border
 
             pCard.innerHTML = `
-                <span class="price-tag" style="position:absolute; top:6px; right:6px; background:#22c55e; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:0.68rem; z-index:5;">$300k</span>
+                <span class="price-tag" style="position:absolute; top:6px; right:6px; background:rgba(34, 197, 94, 0.75); color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:0.68rem; z-index:5;">$300k</span>
                 <h3 style="margin:0; text-shadow:1px 1px 3px #000; font-size:1.2rem; color:#fff; text-align:center;">Store Pack</h3>
                 <span style="font-size:0.7rem; opacity:0.8; font-weight:bold; text-transform:uppercase; margin-top:8px; color:#fff; text-align:center;">7 CARDS<br>(MYTHIC & RARE GUARANTEED)</span>
             `;
@@ -817,6 +808,7 @@ function openStorefrontPhase() {
         }
     }
 
+    // 3. GENERATE PERKS (Coaches & GMs)
     const perksZone = document.getElementById('perks-pool-zone');
     perksZone.innerHTML = '';
 
