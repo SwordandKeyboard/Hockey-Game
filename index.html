@@ -217,9 +217,10 @@ box-shadow: -8px 0 15px -5px rgba(0,0,0,0.4);
 
 .hockey-card.perk-card { background-color: var(--perk-bg) !important; color: #fff !important; border: 5px dashed var(--perk-purple) !important; cursor: pointer; }
 
+/* Fixed tag positioning and transparent green for the price */
 .hockey-card .pos-tag, .hockey-card .price-tag { position: absolute; top: 6px; padding: 2px 6px; border-radius: 4px; font-weight: bold; z-index: 5; }
 .hockey-card .pos-tag { left: 6px; background: rgba(0,0,0,0.85); color: #fff; font-size: 0.72rem; }
-.hockey-card .price-tag { right: 6px; background: #22c55e; color: #000; font-size: 0.68rem; }
+.hockey-card .price-tag { right: 6px; background: rgba(34, 197, 94, 0.75); color: #000; font-size: 0.68rem; }
 
 .team-tag {
     font-size: 0.65rem;
@@ -235,13 +236,13 @@ box-shadow: -8px 0 15px -5px rgba(0,0,0,0.4);
     color: #ffffff;
 }
 
+/* Wrapping enabled, line-height added, ellipses removed */
 .player-name {
     font-size: 0.95rem;
     font-weight: bold;
     margin: 2px 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal; 
+    line-height: 1.1;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
     color: #ffffff;
 }
