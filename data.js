@@ -121,13 +121,13 @@ const HISTORICAL_STAGES = [
     { name: "Winter Classic Preview", gamesCount: 3, target: 700 },
     { name: "New Year's Resolution", gamesCount: 4, target: 750 },
     { name: "Mid-Season Slump", gamesCount: 4, target: 800 },
-    { name: "All-Star Break Push", gamesCount: 5, target: 860 },
-    { name: "February Freeze", gamesCount: 4, target: 910 },
-    { name: "Stadium Series", gamesCount: 3, target: 960 },           // Fast turnaround before the trade deadline
-    { name: "Trade Deadline Madness", gamesCount: 4, target: 1020 },
-    { name: "March Playoff Push", gamesCount: 6, target: 1080 },      // Late-game brutality starts
-    { name: "Spring Awakening", gamesCount: 4, target: 1140 },
-    { name: "Northeastern Rivalries", gamesCount: 4, target: 1190 },
-    { name: "Division Deciders", gamesCount: 3, target: 1250 },
-    { name: "Season Finale Gridlock", gamesCount: 4, target: 1320 }   // Requires maximum perk synergy
+    { name: "All-Star Break Push", gamesCount: 5, target: 900 },
+    { name: "February Freeze", gamesCount: 4, target: 1000 },
+    { name: "Stadium Series", gamesCount: 3, target: 1200 },           // Fast turnaround before the trade deadline
+    { name: "Trade Deadline Madness", gamesCount: 4, target: 1500 },
+    { name: "March Playoff Push", gamesCount: 6, target: 1750 },      // Late-game brutality starts
+    { name: "Spring Awakening", gamesCount: 4, target: 2000 },
+    { name: "Northeastern Rivalries", gamesCount: 4, target: 2250 },
+    { name: "Division Deciders", gamesCount: 3, target: 2500 },
+    { name: "Season Finale Gridlock", gamesCount: 4, target: 3000 }   // Requires maximum perk synergy
 ];
