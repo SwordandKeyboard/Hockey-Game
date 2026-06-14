@@ -108,27 +108,21 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-function getPlayerSalary(player) 
-{
-    if (player.pos === "G") 
-    {
-        if (player.stats.SV >= 0.930) return 250000;
-        if (player.stats.SV >= 0.915) return 100000;
-        return 75000;
-    } 
-    else if (player.pos === "D") 
-    {
+function getPlayerSalary(player) {
+    if (player.pos === "G") {
+        if (player.stats.SV >= 0.930) return 500000;
+        if (player.stats.SV >= 0.920) return 250000;
+        if (player.stats.SV >= 0.910) return 150000;
+        if (player.stats.SV >= 0.900) return 75000;
+        return 50000;
+    } else if (player.pos === "D") {
         let base = (player.stats.G * 2) + player.stats.A;
-        // Defensemen scale: drastically lower thresholds to reflect historical realism
-        if (base >= 110) return 500000; // Generational (e.g., 25G, 60A)
-        if (base >= 80) return 250000;  // Mythic (e.g., 15G, 50A)
-        if (base >= 55) return 150000;  // Rare (e.g., 10G, 35A)
-        if (base >= 35) return 75000;   // Solid Top 4
-        return 50000;                   // Depth
-    } 
-    else 
-    {
-        // Forward scale (LW, C, RW)
+        if (base >= 110) return 500000;
+        if (base >= 80) return 250000;
+        if (base >= 55) return 150000;
+        if (base >= 35) return 75000;
+        return 50000;
+    } else {
         let base = (player.stats.G * 2) + player.stats.A;
         if (base >= 160) return 500000;
         if (base >= 135) return 250000;
@@ -318,8 +312,6 @@ function openPackModal(cards, onCloseCallback) {
         const card = createCardUiNode(player, false);
         card.onclick = null;
         card.draggable = false;
-        
-        // Removed the hard-coded border colors so the new shape banners show properly
         grid.appendChild(card);
     });
 
@@ -343,7 +335,7 @@ function finishInitialDraft() {
 // --- GAMEPLAY LOOP ---
 function beginStage() {
     runState.handIndex = 0;
-    beginHand();
+    beginStage();
 }
 
 function beginHand() {
@@ -492,6 +484,15 @@ function handleDrop(event) {
     } catch(e) { console.error("Drop failed: ", e); }
 }
 
+function handleDrop(event) {
+    event.preventDefault(); document.getElementById('rink-drop-zone').classList.remove('drag-over');
+    try {
+        const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+        const player = runState.currentHand.find(p => p.name === data.name && p.season === data.season);
+        if (player) selectCardToLineup(player);
+    } catch(e) { console.error("Drop failed: ", e); }
+}
+
 function renderHandSelectionScreen() {
     DOM.handZone.innerHTML = '';
     let unselectedHand = runState.currentHand.filter(p => !runState.selectedLineup.includes(p));
@@ -576,10 +577,14 @@ function createCardUiNode(player, showStorefrontPrice) {
     const salary = getPlayerSalary(player);
     
     // Assign interior banner shape based on rarity tier
-    if (salary >= 250000) { // MYTHIC
+    if (salary >= 500000) {
+        div.classList.add('rarity-generational');
+    } else if (salary >= 250000) {
         div.classList.add('rarity-mythic');
-    } else if (salary >= 150000) { // RARE
+    } else if (salary >= 150000) {
         div.classList.add('rarity-rare');
+    } else if (salary >= 75000) {
+        div.classList.add('rarity-solid');
     }
 
     let actionBadge = showStorefrontPrice ? `<span class="price-tag">$${(salary/1000)}k</span>` : '';
@@ -621,6 +626,7 @@ function selectCardToLineup(player) {
     renderHandSelectionScreen();
 }
 
+// --- REST OF THE LOGIC FROM ORIGINAL BRANCH REMAINING STABLE ---
 function removeCardFromLineup(player) {
     runState.selectedLineup = runState.selectedLineup.filter(p => p !== player);
     renderHandSelectionScreen();
@@ -691,6 +697,7 @@ function updateProjectedScore() {
     }
 }
 
+// --- REMAINDER RE-MAPPED TO MATCH ORIGINAL ---
 function updatePilesDisplay() {
     document.getElementById('draw-count').innerText = `The Roster (${runState.runtimeDeck.length})`;
     document.getElementById('discard-count').innerText = `Discard (${runState.discardPile.length})`;
@@ -739,7 +746,6 @@ function openStorefrontPhase() {
     switchView('scr-draft');
     updateHudDisplay();
 
-    // 1. GENERATE PLAYERS (4 Slots)
     const playerZone = document.getElementById('draft-pool-zone');
     playerZone.innerHTML = '';
     let nonOwnedPlayers = MASTER_REGULAR_POOL.filter(masterCard => {
@@ -768,7 +774,6 @@ function openStorefrontPhase() {
         playerZone.appendChild(card);
     });
 
-    // 2. GENERATE STORE PACKS (4 Slots at $300k)
     const packsZone = document.getElementById('store-packs-zone');
     if (packsZone) {
         packsZone.innerHTML = '';
@@ -781,7 +786,7 @@ function openStorefrontPhase() {
             pCard.style.justifyContent = "center";
             pCard.style.flexDirection = "column";
             pCard.style.backgroundColor = "#1e293b";
-            pCard.style.border = "5px solid #eab308"; // Gold border
+            pCard.style.border = "5px solid #eab308"; 
 
             pCard.innerHTML = `
                 <span class="price-tag" style="position:absolute; top:6px; right:6px; background:#22c55e; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:0.68rem; z-index:5;">$300k</span>
@@ -812,7 +817,6 @@ function openStorefrontPhase() {
         }
     }
 
-    // 3. GENERATE PERKS (Coaches & GMs)
     const perksZone = document.getElementById('perks-pool-zone');
     perksZone.innerHTML = '';
 
@@ -845,7 +849,7 @@ function openStorefrontPhase() {
         pCard.className = "hockey-card perk-card";
         pCard.innerHTML = `
             <span class="pos-tag" style="background:#7c3aed; max-width: 75px; white-space: normal; line-height: 1.1; text-align: left;">${rolledBasePerk.category.toUpperCase().replace("_", " ")}<br>LVL ${displayLvl}</span>
-            <span class="price-tag">$${(lvlData.cost/1000)}k</span>
+            <span class="price-tag" style="background: rgba(34, 197, 94, 0.75);">$${(lvlData.cost/1000)}k</span>
             <div class="player-name">${rolledBasePerk.name}</div>
             <div class="stat-container">
                 <div class="stat-line" style="background:rgba(0,0,0,0.5); font-size:0.7rem; color: #fff; white-space: normal;">${lvlData.desc}</div>
