@@ -216,19 +216,48 @@ box-shadow: -8px 0 15px -5px rgba(0,0,0,0.4);
 .hockey-card:active { cursor: grabbing; }
 
 /* --- RARITY BANNERS --- */
+
+/* 1. SOLID TOP 4 (75k) - Small Semicircle */
+.hockey-card.rarity-solid::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 12px;
+    background-color: var(--team-border, #cbd5e1);
+    border-radius: 0 0 15px 15px;
+    z-index: 1;
+}
+
+/* 2. RARE (150k) - Large Semicircle with Silver Cutout */
 .hockey-card.rarity-rare::before {
     content: '';
     position: absolute;
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 45px;
+    width: 48px;
     height: 20px;
     background-color: var(--team-border, #cbd5e1);
     border-radius: 0 0 25px 25px;
     z-index: 1;
 }
+.hockey-card.rarity-rare::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 14px;
+    background-color: #cbd5e1; /* Silver Cutout */
+    border-radius: 50%;
+    z-index: 2;
+}
 
+/* 3. MYTHIC (250k) - Small Triangle/Chevron */
 .hockey-card.rarity-mythic::before {
     content: '';
     position: absolute;
@@ -237,17 +266,46 @@ box-shadow: -8px 0 15px -5px rgba(0,0,0,0.4);
     transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 22px solid transparent;
-    border-right: 22px solid transparent;
-    border-top: 25px solid var(--team-border, #eab308);
+    border-left: 16px solid transparent;
+    border-right: 16px solid transparent;
+    border-top: 18px solid var(--team-border, #eab308);
     z-index: 1;
+}
+
+/* 4. GENERATIONAL (500k) - Large Triangle/Chevron with Gold Inside */
+.hockey-card.rarity-generational::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 26px solid transparent;
+    border-right: 26px solid transparent;
+    border-top: 32px solid var(--team-border, #eab308);
+    z-index: 1;
+}
+.hockey-card.rarity-generational::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-top: 16px solid var(--card-gold); /* Gold Center */
+    z-index: 2;
 }
 
 .hockey-card.perk-card { background-color: var(--perk-bg) !important; color: #fff !important; border: 5px dashed var(--perk-purple) !important; cursor: pointer; }
 
+/* Fixed tag positioning and transparent green for the price */
 .hockey-card .pos-tag, .hockey-card .price-tag { position: absolute; top: 6px; padding: 2px 6px; border-radius: 4px; font-weight: bold; z-index: 5; }
 .hockey-card .pos-tag { left: 6px; background: rgba(0,0,0,0.85); color: #fff; font-size: 0.72rem; }
-.hockey-card .price-tag { right: 6px; background: #22c55e; color: #000; font-size: 0.68rem; }
+.hockey-card .price-tag { right: 6px; background: rgba(34, 197, 94, 0.75); color: #000; font-size: 0.68rem; }
 
 .team-tag {
     font-size: 0.65rem;
@@ -263,12 +321,12 @@ box-shadow: -8px 0 15px -5px rgba(0,0,0,0.4);
     color: #ffffff;
 }
 
-/* Updated Player Name to Wrap */
+/* Wrapping enabled, line-height added, ellipses removed */
 .player-name {
     font-size: 0.95rem;
     font-weight: bold;
     margin: 2px 0;
-    white-space: normal;
+    white-space: normal; 
     line-height: 1.1;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
     color: #ffffff;
