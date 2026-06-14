@@ -304,13 +304,7 @@ function openPackModal(cards, onCloseCallback) {
         card.onclick = null;
         card.draggable = false;
         
-        let salary = getPlayerSalary(player);
-        if (salary >= PackManager.RARITY.MYTHIC) {
-            card.style.border = "6px solid #eab308"; 
-        } else if (salary >= PackManager.RARITY.RARE) {
-            card.style.border = "6px solid #a855f7"; 
-        }
-
+        // Removed the hard-coded border colors so the new shape banners show properly
         grid.appendChild(card);
     });
 
@@ -500,10 +494,10 @@ function renderHandSelectionScreen() {
         card.style.setProperty('--y', `${Math.pow(offset, 2) * 2}px`);
         card.style.zIndex = index + 1;
         DOM.handZone.appendChild(card);
-    }); // <--- Closes the forEach loop
+    });
 
-    renderSelectedLineupZone(); // <--- This was missing!
-} // <--- Closes the main function
+    renderSelectedLineupZone(); 
+} 
 
 function renderSelectedLineupZone() {
     DOM.selectedZone.innerHTML = '';
@@ -560,8 +554,19 @@ function createCardUiNode(player, showStorefrontPrice) {
     const tColor = TEAM_COLORS[player.team] || { bg: "#333", border: "#888" };
     div.style.backgroundColor = tColor.bg;
     div.style.border = `5px solid ${tColor.border}`;
+    
+    // Pass the specific team's border color to CSS for the rarity banners
+    div.style.setProperty('--team-border', tColor.border);
 
     const salary = getPlayerSalary(player);
+    
+    // Assign interior banner shape based on rarity tier
+    if (salary >= 250000) { // MYTHIC
+        div.classList.add('rarity-mythic');
+    } else if (salary >= 150000) { // RARE
+        div.classList.add('rarity-rare');
+    }
+
     let actionBadge = showStorefrontPrice ? `<span class="price-tag">$${(salary/1000)}k</span>` : '';
 
     let statsHtml = '';
@@ -628,7 +633,7 @@ function renderActiveStaff() {
             pCard.className = "hockey-card perk-card";
             pCard.style.cursor = "default";
             pCard.innerHTML = `
-                <span class="pos-tag" style="background:#7c3aed;">${role.label.toUpperCase()} LVL ${perk.level + 1}</span>
+                <span class="pos-tag" style="background:#7c3aed; max-width: 75px; white-space: normal; line-height: 1.1; text-align: left;">${role.label.toUpperCase()}<br>LVL ${perk.level + 1}</span>
                 <div class="player-name">${perk.name}</div>
                 <div class="stat-container">
                     <div class="stat-line" style="background:rgba(0,0,0,0.5); font-size:0.7rem; color: #fff; white-space: normal; padding: 6px;">${perk.data.desc}</div>
@@ -824,7 +829,7 @@ function openStorefrontPhase() {
         const pCard = document.createElement('div');
         pCard.className = "hockey-card perk-card";
         pCard.innerHTML = `
-            <span class="pos-tag" style="background:#7c3aed;">${rolledBasePerk.category.toUpperCase().replace("_", " ")} LVL ${displayLvl}</span>
+            <span class="pos-tag" style="background:#7c3aed; max-width: 75px; white-space: normal; line-height: 1.1; text-align: left;">${rolledBasePerk.category.toUpperCase().replace("_", " ")}<br>LVL ${displayLvl}</span>
             <span class="price-tag">$${(lvlData.cost/1000)}k</span>
             <div class="player-name">${rolledBasePerk.name}</div>
             <div class="stat-container">
