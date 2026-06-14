@@ -108,12 +108,27 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-function getPlayerSalary(player) {
-    if (player.pos === "G") {
+function getPlayerSalary(player) 
+{
+    if (player.pos === "G") 
+    {
         if (player.stats.SV >= 0.930) return 250000;
         if (player.stats.SV >= 0.915) return 100000;
         return 75000;
-    } else {
+    } 
+    else if (player.pos === "D") 
+    {
+        let base = (player.stats.G * 2) + player.stats.A;
+        // Defensemen scale: drastically lower thresholds to reflect historical realism
+        if (base >= 110) return 500000; // Generational (e.g., 25G, 60A)
+        if (base >= 80) return 250000;  // Mythic (e.g., 15G, 50A)
+        if (base >= 55) return 150000;  // Rare (e.g., 10G, 35A)
+        if (base >= 35) return 75000;   // Solid Top 4
+        return 50000;                   // Depth
+    } 
+    else 
+    {
+        // Forward scale (LW, C, RW)
         let base = (player.stats.G * 2) + player.stats.A;
         if (base >= 160) return 500000;
         if (base >= 135) return 250000;
